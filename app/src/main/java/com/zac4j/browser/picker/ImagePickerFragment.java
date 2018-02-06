@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -19,14 +18,13 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-
+import com.zac4j.browser.Logger;
 import com.zac4j.browser.PermissionsDelegate;
 import com.zac4j.browser.R;
+import com.zac4j.browser.util.BitmapUtil;
+import com.zac4j.browser.util.FileUtil;
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 
 /**
  * Image pick page.
@@ -55,7 +53,7 @@ public class ImagePickerFragment extends Fragment {
       Bundle savedInstanceState) {
     View rootView = inflater.inflate(R.layout.fragment_image_picker, container, false);
 
-    mWebView = rootView.findViewById(R.id.image_picker_container);
+    mWebView = rootView.findViewById(R.id.image_picker_webview);
 
     mPermissionsDelegate = new PermissionsDelegate(getActivity());
 
@@ -86,7 +84,7 @@ public class ImagePickerFragment extends Fragment {
           // Create the File where the photo should go
           File photoFile = null;
           try {
-            photoFile = createImageFile();
+            photoFile = BitmapUtil.createImageFile();
             takePictureIntent.putExtra("PhotoPath", mCameraPhotoPath);
           } catch (IOException ex) {
             // Error occurred while creating the File
@@ -132,21 +130,39 @@ public class ImagePickerFragment extends Fragment {
     return rootView;
   }
 
-  /**
-   * More info this method can be found at
-   * http://developer.android.com/training/camera/photobasics.html
-   *
-   * @throws IOException
-   */
-  private File createImageFile() throws IOException {
-    // Create an image file name
-    String timeStamp =
-        new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-    String imageFileName = "JPEG_" + timeStamp + "_";
-    File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-    return File.createTempFile(imageFileName,  /* prefix */
-        ".jpg",         /* suffix */
-        storageDir      /* directory */);
+  @Override
+  public void onDestroyView() {
+    super.onDestroyView();
+    destroyWebView();
+  }
+
+  private void destroyWebView() {
+    if (mWebView != null) {
+      mWebView.clearHistory();
+
+      // NOTE: clears RAM cache, if you pass true, it will also clear the disk cache.
+      // Probably not a great idea to pass true if you have other WebViews still alive.
+      mWebView.clearCache(true);
+
+      // Loading a blank page is optional, but will ensure that the WebView isn't doing anything when you destroy it.
+      mWebView.loadUrl("about:blank");
+
+      mWebView.onPause();
+      mWebView.removeAllViews();
+      mWebView.destroyDrawingCache();
+
+      // NOTE: This pauses JavaScript execution for ALL WebViews,
+      // do not use if you have other WebViews still alive.
+      // If you create another WebView after calling this,
+      // make sure to call mWebView.resumeTimers().
+      mWebView.pauseTimers();
+
+      // NOTE: This can occasionally cause a segfault below API 17 (4.2)
+      mWebView.destroy();
+
+      // Null out the reference so that you don't end up re-using it.
+      mWebView = null;
+    }
   }
 
   /**
@@ -193,7 +209,11 @@ public class ImagePickerFragment extends Fragment {
       if (data == null) {
         // If there is not data, then we may have taken a photo
         if (mCameraPhotoPath != null) {
-          results = new Uri[] { Uri.parse(mCameraPhotoPath) };
+          Uri imgUri = Uri.parse(mCameraPhotoPath);
+          Logger.d(TAG, "File path: " + mCameraPhotoPath);
+          File compressedFile = BitmapUtil.compressImageWithDefaults(getActivity(), imgUri);
+          Logger.d(TAG, "File after compress size: " + FileUtil.getFileSize(compressedFile) + "KB");
+          results = new Uri[] { Uri.fromFile(compressedFile) };
         }
       } else {
         String dataString = data.getDataString();

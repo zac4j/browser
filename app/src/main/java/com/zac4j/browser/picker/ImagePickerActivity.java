@@ -17,7 +17,7 @@ public class ImagePickerActivity extends AppCompatActivity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_image_picker);
     if (savedInstanceState == null) {
-      getSupportFragmentManager().beginTransaction()
+      getFragmentManager().beginTransaction()
           .add(R.id.image_picker_container, new ImagePickerFragment())
           .commit();
     }
