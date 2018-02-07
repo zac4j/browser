@@ -44,4 +44,29 @@ public class PermissionsDelegate {
         && permissions[0].equals(Manifest.permission.WRITE_EXTERNAL_STORAGE)
         && grantResults[0] == PackageManager.PERMISSION_GRANTED;
   }
+
+  public boolean resultGranted(int requestCode, String[] permissions, int[] grantResults) {
+
+    if (requestCode != REQUEST_CODE) {
+      return false;
+    }
+
+    if (grantResults.length < 1) {
+      return false;
+    }
+    if (!(permissions[0].equals(Manifest.permission.CAMERA))) {
+      return false;
+    }
+
+    // show no permission hint
+
+    if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+      // hide no permission hint
+      return true;
+    }
+
+    requestCameraPermission();
+    // show no permission hint
+    return false;
+  }
 }

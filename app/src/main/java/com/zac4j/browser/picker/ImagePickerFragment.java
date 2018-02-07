@@ -4,12 +4,14 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.util.Log;
+import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,8 +23,8 @@ import android.webkit.WebViewClient;
 import com.zac4j.browser.Logger;
 import com.zac4j.browser.PermissionsDelegate;
 import com.zac4j.browser.R;
-import com.zac4j.browser.util.BitmapUtil;
 import com.zac4j.browser.util.FileUtil;
+import com.zac4j.browser.util.ImageUtil;
 import java.io.File;
 import java.io.IOException;
 
@@ -39,11 +41,11 @@ public class ImagePickerFragment extends Fragment {
   private static final String TAG = ImagePickerFragment.class.getSimpleName();
 
   public static final int INPUT_FILE_REQUEST_CODE = 1;
-  public static final String EXTRA_FROM_NOTIFICATION = "EXTRA_FROM_NOTIFICATION";
 
   private WebView mWebView;
   private ValueCallback<Uri[]> mFilePathCallback;
   private String mCameraPhotoPath;
+  private File mCompressedFile;
 
   public ImagePickerFragment() {
   }
@@ -84,11 +86,11 @@ public class ImagePickerFragment extends Fragment {
           // Create the File where the photo should go
           File photoFile = null;
           try {
-            photoFile = BitmapUtil.createImageFile();
+            photoFile = ImageUtil.createImageFile();
             takePictureIntent.putExtra("PhotoPath", mCameraPhotoPath);
           } catch (IOException ex) {
             // Error occurred while creating the File
-            Log.e(TAG, "Unable to create Image File", ex);
+            Logger.e(TAG, "Unable to create Image File", ex);
           }
 
           // Continue only if the File was successfully created
@@ -134,6 +136,7 @@ public class ImagePickerFragment extends Fragment {
   public void onDestroyView() {
     super.onDestroyView();
     destroyWebView();
+    deleteTempFile();
   }
 
   private void destroyWebView() {
@@ -203,22 +206,35 @@ public class ImagePickerFragment extends Fragment {
     }
 
     Uri[] results = null;
+    mCompressedFile = null;
 
     // Check that the response is a good one
     if (resultCode == Activity.RESULT_OK) {
       if (data == null) {
         // If there is not data, then we may have taken a photo
         if (mCameraPhotoPath != null) {
-          Uri imgUri = Uri.parse(mCameraPhotoPath);
-          Logger.d(TAG, "File path: " + mCameraPhotoPath);
-          File compressedFile = BitmapUtil.compressImageWithDefaults(getActivity(), imgUri);
-          Logger.d(TAG, "File after compress size: " + FileUtil.getFileSize(compressedFile) + "KB");
-          results = new Uri[] { Uri.fromFile(compressedFile) };
+          // todo compress image
+          mCompressedFile =
+              compressImageDefaults(new File(mCameraPhotoPath), mCompressedFile.getPath());
+          Logger.d(TAG, "File path: "
+              + mCameraPhotoPath
+              + " compressed file size: "
+              + mCompressedFile.length() / 1024
+              + "KB");
+          results = new Uri[] { Uri.fromFile(mCompressedFile) };
         }
       } else {
         String dataString = data.getDataString();
         if (dataString != null) {
-          results = new Uri[] { Uri.parse(dataString) };
+          // todo compress image
+          String filePath = FileUtil.getPath(getActivity(), Uri.parse(dataString));
+          mCompressedFile = compressImageDefaults(new File(filePath), mCompressedFile.getPath());
+          Logger.d(TAG, "File path: "
+              + dataString
+              + " compressed file size: "
+              + mCompressedFile.length() / 1024
+              + "KB");
+          results = new Uri[] { Uri.fromFile(mCompressedFile) };
         }
       }
     }
@@ -226,5 +242,32 @@ public class ImagePickerFragment extends Fragment {
     mFilePathCallback.onReceiveValue(results);
     mFilePathCallback = null;
     return;
+  }
+
+  @Override
+  public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+      @NonNull int[] grantResults) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    if (mPermissionsDelegate.resultGranted(requestCode, permissions, grantResults)) {
+
+    }
+  }
+
+  private File compressImageDefaults(File imageFile, String destinationPath) {
+    File file = null;
+    try {
+      file = ImageUtil.compressImage(imageFile, 1080, 1920, Bitmap.CompressFormat.JPEG, 80,
+          destinationPath);
+    } catch (IOException e) {
+      Logger.e(TAG, e.getMessage());
+    }
+
+    return file;
+  }
+
+  private void deleteTempFile() {
+    if (mCompressedFile != null && mCompressedFile.delete()) {
+      mCompressedFile = null;
+    }
   }
 }
