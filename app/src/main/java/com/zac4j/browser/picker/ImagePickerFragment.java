@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -136,7 +137,7 @@ public class ImagePickerFragment extends Fragment {
   public void onDestroyView() {
     super.onDestroyView();
     destroyWebView();
-    deleteTempFile();
+    //deleteTempFile();
   }
 
   private void destroyWebView() {
@@ -206,42 +207,24 @@ public class ImagePickerFragment extends Fragment {
     }
 
     Uri[] results = null;
+    // create compressed file reference to allow delete it conveniently.
     mCompressedFile = null;
-    String fileRealPath = "";
 
     // Check that the response is a good one
     if (resultCode == Activity.RESULT_OK) {
       if (data == null) {
         // If there is not data, then we may have taken a photo
-        if (mCameraPhotoPath != null) {
-
-          fileRealPath = FileUtil.getPath(getActivity(), Uri.parse(mCameraPhotoPath));
-          mCompressedFile = compressImageDefaults(fileRealPath);
-
-          Logger.d(TAG, "File path: "
-              + mCameraPhotoPath
-              + " compressed file size: "
-              + mCompressedFile.length() / 1024
-              + "KB");
-
-          results = new Uri[] { Uri.fromFile(mCompressedFile) };
-        }
+        mCompressedFile = getCompressedImage(mCameraPhotoPath);
       } else {
         String dataString = data.getDataString();
-        if (dataString != null) {
-          fileRealPath = FileUtil.getPath(getActivity(), Uri.parse(dataString));
-          mCompressedFile = compressImageDefaults(fileRealPath);
-
-          Logger.d(TAG, "File path: "
-              + dataString
-              + " compressed file size: "
-              + mCompressedFile.length() / 1024
-              + "KB");
-          results = new Uri[] { Uri.fromFile(mCompressedFile) };
-        }
+        mCompressedFile = getCompressedImage(dataString);
       }
     }
 
+    if (mCompressedFile != null) {
+      results = new Uri[] { Uri.fromFile(mCompressedFile) };
+    }
+    // results equals to null is legal..
     mFilePathCallback.onReceiveValue(results);
     mFilePathCallback = null;
     return;
@@ -252,19 +235,48 @@ public class ImagePickerFragment extends Fragment {
       @NonNull int[] grantResults) {
     super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     if (mPermissionsDelegate.resultGranted(requestCode, permissions, grantResults)) {
-
+      // todo permission success logic
     }
   }
 
-  private File compressImageDefaults(String imageFilePath) {
+  /**
+   * Get compressed file from given data path.
+   *
+   * @param dataPath data path from capture image callback.
+   * @return compressed image file.
+   */
+  private File getCompressedImage(String dataPath) {
+    if (TextUtils.isEmpty(dataPath)) {
+      Logger.e(TAG, "There is no image data get back");
+      return null;
+    }
+
+    String filePath = FileUtil.getPath(getActivity(), Uri.parse(dataPath));
+
+    if (TextUtils.isEmpty(filePath)) {
+      return null;
+    }
+
+    return compressImage(filePath);
+  }
+
+  /**
+   * Compress image file by given image file path.
+   *
+   * @param imageFilePath image resource file path.
+   * @return compressed image file.
+   */
+  private File compressImage(String imageFilePath) {
     File file = null;
     try {
       String filename = new File(imageFilePath).getName();
       String destinationPath =
           Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
               .getAbsolutePath() + File.separator + filename;
-      file = ImageUtil.compressImage(imageFilePath, 1080, 1920, Bitmap.CompressFormat.JPEG, 80,
+      file = ImageUtil.compressImage(imageFilePath, 720, 1280, Bitmap.CompressFormat.JPEG, 80,
           destinationPath);
+
+      logFileInfo(file);
     } catch (IOException e) {
       Logger.e(TAG, e.getMessage());
     }
@@ -272,6 +284,20 @@ public class ImagePickerFragment extends Fragment {
     return file;
   }
 
+  /**
+   * Log current infos.
+   *
+   * @param file given file to print infos.
+   */
+  private void logFileInfo(File file) {
+    Logger.d(TAG,
+        "File path: " + file.getAbsolutePath() + " compressed file size: " + FileUtil.readFileSize(
+            file.length()));
+  }
+
+  /**
+   * delete temp created file.
+   */
   private void deleteTempFile() {
     if (mCompressedFile != null && mCompressedFile.delete()) {
       mCompressedFile = null;

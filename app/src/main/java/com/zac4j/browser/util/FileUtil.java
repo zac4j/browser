@@ -133,6 +133,13 @@ public class FileUtil {
     return "com.android.providers.media.documents".equals(uri.getAuthority());
   }
 
+  /**
+   * Get the value of the filename for this Uri.
+   *
+   * @param context The context.
+   * @param uri The uri to check filename.
+   * @return filename from given uri.
+   */
   public static String getFileName(Context context, Uri uri) {
     String result = null;
     if (uri.getScheme().equals("content")) {
@@ -159,7 +166,10 @@ public class FileUtil {
     return result;
   }
 
-  public static String getFileSize(long size) {
+  /**
+   * Read file size.
+   */
+  public static String readFileSize(long size) {
     if (size <= 0) {
       return "0";
     }
