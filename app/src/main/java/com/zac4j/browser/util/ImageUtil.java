@@ -18,6 +18,29 @@ public class ImageUtil {
 
   }
 
+  public static File compressImage(String imageFilePath, int reqWidth, int reqHeight,
+      Bitmap.CompressFormat compressFormat, int quality, String destinationPath)
+      throws IOException {
+    FileOutputStream fileOutputStream = null;
+    File file = new File(destinationPath).getParentFile();
+    if (!file.exists()) {
+      file.mkdirs();
+    }
+    try {
+      fileOutputStream = new FileOutputStream(destinationPath);
+      // write the compressed bitmap at the destination specified by destinationPath.
+      decodeSampledBitmapFromFile(imageFilePath, reqWidth, reqHeight).compress(compressFormat,
+          quality, fileOutputStream);
+    } finally {
+      if (fileOutputStream != null) {
+        fileOutputStream.flush();
+        fileOutputStream.close();
+      }
+    }
+
+    return new File(destinationPath);
+  }
+
   public static File compressImage(File imageFile, int reqWidth, int reqHeight,
       Bitmap.CompressFormat compressFormat, int quality, String destinationPath)
       throws IOException {
@@ -39,6 +62,39 @@ public class ImageUtil {
     }
 
     return new File(destinationPath);
+  }
+
+  public static Bitmap decodeSampledBitmapFromFile(String imageFilePath, int reqWidth,
+      int reqHeight) throws IOException {
+    // First decode with inJustDecodeBounds=true to check dimensions
+    BitmapFactory.Options options = new BitmapFactory.Options();
+    options.inJustDecodeBounds = true;
+    BitmapFactory.decodeFile(imageFilePath, options);
+
+    // Calculate inSampleSize
+    options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+    // Decode bitmap with inSampleSize set
+    options.inJustDecodeBounds = false;
+
+    Bitmap scaledBitmap = BitmapFactory.decodeFile(imageFilePath, options);
+
+    //check the rotation of the image and display it properly
+    ExifInterface exif;
+    exif = new ExifInterface(imageFilePath);
+    int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 0);
+    Matrix matrix = new Matrix();
+    if (orientation == 6) {
+      matrix.postRotate(90);
+    } else if (orientation == 3) {
+      matrix.postRotate(180);
+    } else if (orientation == 8) {
+      matrix.postRotate(270);
+    }
+    scaledBitmap =
+        Bitmap.createBitmap(scaledBitmap, 0, 0, scaledBitmap.getWidth(), scaledBitmap.getHeight(),
+            matrix, true);
+    return scaledBitmap;
   }
 
   public static Bitmap decodeSampledBitmapFromFile(File imageFile, int reqWidth, int reqHeight)
@@ -83,7 +139,7 @@ public class ImageUtil {
     String timeStamp =
         new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
     String imageFileName = "JPEG_" + timeStamp + "_";
-    File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+    File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
     return File.createTempFile(imageFileName,  /* prefix */
         ".jpg",         /* suffix */
         storageDir      /* directory */);

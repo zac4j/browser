@@ -7,6 +7,9 @@ import android.net.Uri;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.provider.OpenableColumns;
+import java.io.File;
+import java.text.DecimalFormat;
 
 /**
  * File process utility
@@ -128,5 +131,42 @@ public class FileUtil {
    */
   public static boolean isMediaDocument(Uri uri) {
     return "com.android.providers.media.documents".equals(uri.getAuthority());
+  }
+
+  public static String getFileName(Context context, Uri uri) {
+    String result = null;
+    if (uri.getScheme().equals("content")) {
+      Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
+      try {
+        if (cursor != null && cursor.moveToFirst()) {
+          result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+      } finally {
+        if (cursor != null) {
+          cursor.close();
+        }
+      }
+    }
+    if (result == null) {
+      result = uri.getPath();
+      int cut = result.lastIndexOf(File.separator);
+      if (cut != -1) {
+        result = result.substring(cut + 1);
+      }
+    }
+    return result;
+  }
+
+  public static String getFileSize(long size) {
+    if (size <= 0) {
+      return "0";
+    }
+    final String[] units = new String[] { "B", "KB", "MB", "GB", "TB" };
+    int digitGroups = (int) (Math.log10(size) / Math.log10(1024));
+    return new DecimalFormat("#,##0.#").format(size / Math.pow(1024, digitGroups))
+        + " "
+        + units[digitGroups];
   }
 }

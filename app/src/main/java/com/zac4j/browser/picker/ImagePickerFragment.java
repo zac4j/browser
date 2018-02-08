@@ -4,12 +4,12 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
@@ -207,28 +207,31 @@ public class ImagePickerFragment extends Fragment {
 
     Uri[] results = null;
     mCompressedFile = null;
+    String fileRealPath = "";
 
     // Check that the response is a good one
     if (resultCode == Activity.RESULT_OK) {
       if (data == null) {
         // If there is not data, then we may have taken a photo
         if (mCameraPhotoPath != null) {
-          // todo compress image
-          mCompressedFile =
-              compressImageDefaults(new File(mCameraPhotoPath), mCompressedFile.getPath());
+
+          fileRealPath = FileUtil.getPath(getActivity(), Uri.parse(mCameraPhotoPath));
+          mCompressedFile = compressImageDefaults(fileRealPath);
+
           Logger.d(TAG, "File path: "
               + mCameraPhotoPath
               + " compressed file size: "
               + mCompressedFile.length() / 1024
               + "KB");
+
           results = new Uri[] { Uri.fromFile(mCompressedFile) };
         }
       } else {
         String dataString = data.getDataString();
         if (dataString != null) {
-          // todo compress image
-          String filePath = FileUtil.getPath(getActivity(), Uri.parse(dataString));
-          mCompressedFile = compressImageDefaults(new File(filePath), mCompressedFile.getPath());
+          fileRealPath = FileUtil.getPath(getActivity(), Uri.parse(dataString));
+          mCompressedFile = compressImageDefaults(fileRealPath);
+
           Logger.d(TAG, "File path: "
               + dataString
               + " compressed file size: "
@@ -253,10 +256,14 @@ public class ImagePickerFragment extends Fragment {
     }
   }
 
-  private File compressImageDefaults(File imageFile, String destinationPath) {
+  private File compressImageDefaults(String imageFilePath) {
     File file = null;
     try {
-      file = ImageUtil.compressImage(imageFile, 1080, 1920, Bitmap.CompressFormat.JPEG, 80,
+      String filename = new File(imageFilePath).getName();
+      String destinationPath =
+          Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+              .getAbsolutePath() + File.separator + filename;
+      file = ImageUtil.compressImage(imageFilePath, 1080, 1920, Bitmap.CompressFormat.JPEG, 80,
           destinationPath);
     } catch (IOException e) {
       Logger.e(TAG, e.getMessage());
