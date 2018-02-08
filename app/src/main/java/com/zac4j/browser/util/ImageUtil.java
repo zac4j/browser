@@ -131,7 +131,7 @@ public class ImageUtil {
   }
 
   /**
-   * More info this method can be found at
+   * More info about this method can be found at
    * http://developer.android.com/training/camera/photobasics.html
    */
   public static File createImageFile() throws IOException {
@@ -145,6 +145,10 @@ public class ImageUtil {
         storageDir      /* directory */);
   }
 
+  /**
+   * More info about this method can be found at
+   * https://developer.android.google.cn/topic/performance/graphics/load-bitmap.html#load-bitmap
+   */
   private static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth,
       int reqHeight) {
     // Raw height and width of image
