@@ -219,6 +219,14 @@ public class ImagePickerFragment extends Fragment {
         String dataString = data.getDataString();
         mCompressedFile = getCompressedImage(dataString);
       }
+    } else {
+      if (!TextUtils.isEmpty(mCameraPhotoPath)) {
+        String filePath = FileUtil.getPath(getActivity(), Uri.parse(mCameraPhotoPath));
+        if (!TextUtils.isEmpty(filePath)) {
+          File photo = new File(filePath);
+          System.out.println("delete photo file exist: " + photo.exists() + ", is delete: " + photo.delete());
+        }
+      }
     }
 
     if (mCompressedFile != null) {
@@ -269,6 +277,10 @@ public class ImagePickerFragment extends Fragment {
   private File compressImage(String imageFilePath) {
     File file = null;
     try {
+      File imageFile = new File(imageFilePath);
+      if (imageFile.length() == 0) {
+        return null;
+      }
       String filename = new File(imageFilePath).getName();
       String destinationPath =
           Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
