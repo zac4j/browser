@@ -47,6 +47,7 @@ public class ImagePickerFragment extends Fragment {
   private ValueCallback<Uri[]> mFilePathCallback;
   private String mCameraPhotoPath;
   private File mCompressedFile;
+  private boolean mIsCreateTempPhoto;
 
   public ImagePickerFragment() {
   }
@@ -88,6 +89,7 @@ public class ImagePickerFragment extends Fragment {
           File photoFile = null;
           try {
             photoFile = ImageUtil.createImageFile();
+            mIsCreateTempPhoto = true;
             takePictureIntent.putExtra("PhotoPath", mCameraPhotoPath);
           } catch (IOException ex) {
             // Error occurred while creating the File
@@ -218,15 +220,16 @@ public class ImagePickerFragment extends Fragment {
       } else {
         String dataString = data.getDataString();
         mCompressedFile = getCompressedImage(dataString);
-      }
-    } else {
-      if (!TextUtils.isEmpty(mCameraPhotoPath)) {
-        String filePath = FileUtil.getPath(getActivity(), Uri.parse(mCameraPhotoPath));
-        if (!TextUtils.isEmpty(filePath)) {
-          File photo = new File(filePath);
-          System.out.println("delete photo file exist: " + photo.exists() + ", is delete: " + photo.delete());
+        // todo add clear empty file
+        clearEmptyFile();
+        if (mIsCreateTempPhoto) {
+          System.out.println(TAG + " haven't delete created temp photo file");
+        } else {
+          System.out.println(TAG + " have delete created temp photo file");
         }
       }
+    } else {
+      clearEmptyFile();
     }
 
     if (mCompressedFile != null) {
@@ -281,14 +284,24 @@ public class ImagePickerFragment extends Fragment {
       if (imageFile.length() == 0) {
         return null;
       }
-      String filename = new File(imageFilePath).getName();
+      logFileInfo(imageFile);
+
+      String filename = imageFile.getName();
       String destinationPath =
           Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-              .getAbsolutePath() + File.separator + filename;
+              .getAbsolutePath()
+              + File.separator
+              + getString(R.string.app_name)
+              + File.separator
+              + filename;
+
+      // 已压缩过的图片，不再压缩
+      if (TextUtils.equals(imageFilePath, destinationPath)) {
+        return imageFile;
+      }
+
       file = ImageUtil.compressImage(imageFilePath, 720, 1280, Bitmap.CompressFormat.JPEG, 80,
           destinationPath);
-
-      logFileInfo(file);
     } catch (IOException e) {
       Logger.e(TAG, e.getMessage());
     }
@@ -305,6 +318,18 @@ public class ImagePickerFragment extends Fragment {
     Logger.d(TAG,
         "File path: " + file.getAbsolutePath() + " compressed file size: " + FileUtil.readFileSize(
             file.length()));
+  }
+
+  private void clearEmptyFile() {
+    if (!TextUtils.isEmpty(mCameraPhotoPath)) {
+      String filePath = FileUtil.getPath(getActivity(), Uri.parse(mCameraPhotoPath));
+      if (!TextUtils.isEmpty(filePath)) {
+        File photo = new File(filePath);
+        System.out.println(
+            "delete photo file exist: " + photo.exists() + ", is delete: " + photo.delete());
+        mIsCreateTempPhoto = photo.exists();
+      }
+    }
   }
 
   /**

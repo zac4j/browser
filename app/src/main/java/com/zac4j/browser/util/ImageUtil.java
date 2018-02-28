@@ -3,8 +3,8 @@ package com.zac4j.browser.util;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
-import android.media.ExifInterface;
 import android.os.Environment;
+import android.support.media.ExifInterface;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -136,13 +136,10 @@ public class ImageUtil {
    */
   public static File createImageFile() throws IOException {
     // Create an image file name
-    String timeStamp =
-        new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-    String imageFileName = "JPEG_" + timeStamp + "_";
+    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+    String imageFileName = "IMG_" + timeStamp + ".jpg";
     File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
-    return File.createTempFile(imageFileName,  /* prefix */
-        ".jpg",         /* suffix */
-        storageDir      /* directory */);
+    return new File(storageDir, imageFileName);
   }
 
   /**
