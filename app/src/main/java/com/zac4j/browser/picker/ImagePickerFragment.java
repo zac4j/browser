@@ -4,6 +4,8 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.ClipData;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -13,6 +15,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,8 +29,16 @@ import com.zac4j.browser.PermissionsDelegate;
 import com.zac4j.browser.R;
 import com.zac4j.browser.util.FileUtil;
 import com.zac4j.browser.util.ImageUtil;
+import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
+import io.reactivex.functions.Predicate;
+import io.reactivex.schedulers.Schedulers;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Image pick page.
@@ -53,7 +64,7 @@ public class ImagePickerFragment extends Fragment {
   }
 
   @Override
-  public View onCreateView(LayoutInflater inflater, ViewGroup container,
+  public View onCreateView(LayoutInflater inflater, final ViewGroup container,
       Bundle savedInstanceState) {
     View rootView = inflater.inflate(R.layout.fragment_image_picker, container, false);
 
@@ -106,6 +117,7 @@ public class ImagePickerFragment extends Fragment {
         }
 
         Intent contentSelectionIntent = new Intent(Intent.ACTION_GET_CONTENT);
+        contentSelectionIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         contentSelectionIntent.addCategory(Intent.CATEGORY_OPENABLE);
         contentSelectionIntent.setType("image/*");
 
@@ -216,11 +228,26 @@ public class ImagePickerFragment extends Fragment {
     if (resultCode == Activity.RESULT_OK) {
       if (data == null) {
         // If there is not data, then we may have taken a photo
-        mCompressedFile = getCompressedImage(mCameraPhotoPath);
+        Uri photoUri = Uri.parse(mCameraPhotoPath);
+        results = new Uri[]{photoUri};
       } else {
-        String dataString = data.getDataString();
-        mCompressedFile = getCompressedImage(dataString);
-        // todo add clear empty file
+        ClipData clipData = data.getClipData();
+        Uri uri = data.getData();
+
+        // Multiple image results in clip data.
+        int clipCount = clipData == null ? 0 : clipData.getItemCount();
+        if (clipCount > 0) {
+          results = new Uri[clipCount];
+          for (int i = 0; i < clipCount; i++) {
+            results[i] = clipData.getItemAt(i).getUri();
+          }
+        }
+
+        // Single image result
+        if (uri != null) {
+          results = new Uri[]{uri};
+        }
+
         clearEmptyFile();
         if (mIsCreateTempPhoto) {
           System.out.println(TAG + " haven't delete created temp photo file");
@@ -228,17 +255,19 @@ public class ImagePickerFragment extends Fragment {
           System.out.println(TAG + " have delete created temp photo file");
         }
       }
+
+      processImageResults(getActivity(), results);
     } else {
       clearEmptyFile();
     }
 
-    if (mCompressedFile != null) {
-      results = new Uri[] { Uri.fromFile(mCompressedFile) };
-    }
-    // results equals to null is legal..
-    mFilePathCallback.onReceiveValue(results);
-    mFilePathCallback = null;
-    return;
+    //if (mCompressedFile != null) {
+    //  results = new Uri[] { Uri.fromFile(mCompressedFile) };
+    //}
+    //// results equals to null is legal..
+    //mFilePathCallback.onReceiveValue(results);
+    //mFilePathCallback = null;
+    //return;
   }
 
   @Override
@@ -248,6 +277,48 @@ public class ImagePickerFragment extends Fragment {
     if (mPermissionsDelegate.resultGranted(requestCode, permissions, grantResults)) {
       // todo permission success logic
     }
+  }
+
+  private void processImageResults(final Context context, Uri[] uris) {
+    Observable.fromArray(uris)
+        .subscribeOn(Schedulers.computation())
+        .observeOn(AndroidSchedulers.mainThread())
+        .filter(new Predicate<Uri>() {
+          @Override
+          public boolean test(Uri uri) throws Exception {
+            return uri != null && !TextUtils.isEmpty(FileUtil.getPath(context, uri));
+          }
+        })
+        .flatMap(new Function<Uri, ObservableSource<File>>() {
+          @Override
+          public ObservableSource<File> apply(Uri uri) throws Exception {
+            String filePath = FileUtil.getPath(context, uri);
+            File image = compressImage(filePath);
+            return Observable.just(image);
+          }
+        })
+        .filter(new Predicate<File>() {
+          @Override
+          public boolean test(File file) throws Exception {
+            return !(file == null || !file.exists() || file.length() == 0);
+          }
+        })
+        .toList()
+        .subscribe(new Consumer<List<File>>() {
+          @Override
+          public void accept(List<File> files) throws Exception {
+            int i = 0;
+            for (File file : files) {
+              if (i == 0) {
+                // results equals to null is legal..
+                mFilePathCallback.onReceiveValue(new Uri[] { Uri.fromFile(file) });
+                mFilePathCallback = null;
+              }
+              System.out.println("file path -> " + file.getAbsolutePath());
+              i++;
+            }
+          }
+        });
   }
 
   /**
