@@ -1,4 +1,4 @@
-package com.zac4j.browser.picker;
+package com.zac4j.browser.photo.picker;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
@@ -27,6 +27,7 @@ import android.webkit.WebViewClient;
 import com.zac4j.browser.Logger;
 import com.zac4j.browser.PermissionsDelegate;
 import com.zac4j.browser.R;
+import com.zac4j.browser.photo.PhotoManager;
 import com.zac4j.browser.util.FileUtil;
 import com.zac4j.browser.util.ImageUtil;
 import io.reactivex.Observable;
@@ -45,12 +46,12 @@ import java.util.List;
  * Created by Zaccc on 2018/2/6.
  */
 
-public class ImagePickerFragment extends Fragment {
+public class PickerFragment extends Fragment {
 
   private PermissionsDelegate mPermissionsDelegate;
   private boolean mHasStoragePermission;
 
-  private static final String TAG = ImagePickerFragment.class.getSimpleName();
+  private static final String TAG = PickerFragment.class.getSimpleName();
 
   public static final int INPUT_FILE_REQUEST_CODE = 1;
 
@@ -60,7 +61,7 @@ public class ImagePickerFragment extends Fragment {
   private File mCompressedFile;
   private boolean mIsCreateTempPhoto;
 
-  public ImagePickerFragment() {
+  public PickerFragment() {
   }
 
   @Override
@@ -94,46 +95,7 @@ public class ImagePickerFragment extends Fragment {
         }
         mFilePathCallback = filePathCallback;
 
-        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (takePictureIntent.resolveActivity(getActivity().getPackageManager()) != null) {
-          // Create the File where the photo should go
-          File photoFile = null;
-          try {
-            photoFile = ImageUtil.createImageFile();
-            mIsCreateTempPhoto = true;
-            takePictureIntent.putExtra("PhotoPath", mCameraPhotoPath);
-          } catch (IOException ex) {
-            // Error occurred while creating the File
-            Logger.e(TAG, "Unable to create Image File", ex);
-          }
-
-          // Continue only if the File was successfully created
-          if (photoFile != null) {
-            mCameraPhotoPath = "file:" + photoFile.getAbsolutePath();
-            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
-          } else {
-            takePictureIntent = null;
-          }
-        }
-
-        Intent contentSelectionIntent = new Intent(Intent.ACTION_GET_CONTENT);
-        contentSelectionIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-        contentSelectionIntent.addCategory(Intent.CATEGORY_OPENABLE);
-        contentSelectionIntent.setType("image/*");
-
-        Intent[] intentArray;
-        if (takePictureIntent != null) {
-          intentArray = new Intent[] { takePictureIntent };
-        } else {
-          intentArray = new Intent[0];
-        }
-
-        Intent chooserIntent = new Intent(Intent.ACTION_CHOOSER);
-        chooserIntent.putExtra(Intent.EXTRA_INTENT, contentSelectionIntent);
-        chooserIntent.putExtra(Intent.EXTRA_TITLE, "Image Chooser");
-        chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, intentArray);
-
-        startActivityForResult(chooserIntent, INPUT_FILE_REQUEST_CODE);
+        createImageChooser();
 
         return true;
       }
@@ -145,6 +107,26 @@ public class ImagePickerFragment extends Fragment {
     }
 
     return rootView;
+  }
+
+  private void createImageChooser() {
+    Intent takePhotoIntent = PhotoManager.createTakePhotoIntent(getActivity());
+
+    Intent[] intentArray;
+    if (takePhotoIntent != null) {
+      intentArray = new Intent[] { takePhotoIntent };
+    } else {
+      intentArray = new Intent[0];
+    }
+
+    Intent selectImageIntent = PhotoManager.createSelectImageIntent();
+
+    Intent chooserIntent = new Intent(Intent.ACTION_CHOOSER);
+    chooserIntent.putExtra(Intent.EXTRA_INTENT, selectImageIntent);
+    chooserIntent.putExtra(Intent.EXTRA_TITLE, "Image Chooser");
+    chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, intentArray);
+
+    startActivityForResult(chooserIntent, INPUT_FILE_REQUEST_CODE);
   }
 
   @Override

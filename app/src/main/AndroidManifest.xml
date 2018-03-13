@@ -18,7 +18,7 @@
         <category android:name="android.intent.category.LAUNCHER"/>
       </intent-filter>
     </activity>
-    <activity android:name=".picker.ImagePickerActivity"/>
+    <activity android:name=".photo.picker.PickerActivity"/>
   </application>
 
 </manifest>
