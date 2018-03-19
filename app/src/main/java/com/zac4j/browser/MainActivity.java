@@ -8,15 +8,15 @@ import com.zac4j.browser.photo.picker.PickerActivity;
 
 public class MainActivity extends AppCompatActivity {
 
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_main);
-  }
-
-  public void pickImage(View view) {
-    if (view != null) {
-      startActivity(new Intent(MainActivity.this, PickerActivity.class));
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
     }
-  }
+
+    public void pickImage(View view) {
+        if (view != null) {
+            startActivity(new Intent(MainActivity.this, PickerActivity.class));
+        }
+    }
 }

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <item name="main_btn_pick_image" type="id"/>
+  <item name="main_tv_os_version" type="id"/>
   <item name="image_picker_webview" type="id"/>
   <item name="image_picker_container" type="id"/>
 </resources>
