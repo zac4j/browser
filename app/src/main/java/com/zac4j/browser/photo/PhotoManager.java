@@ -152,6 +152,7 @@ public class PhotoManager {
      */
     public static boolean decodeImageToFile(String encodeImage) {
         byte[] imageBytes = Base64.decode(encodeImage, Base64.DEFAULT);
+        // fixme this file location should be update.
         File file = new File(sCurrentPhotoPath);
         BufferedSink bufferedSink = null;
         try {
