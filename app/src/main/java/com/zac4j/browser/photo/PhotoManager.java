@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v4.content.FileProvider;
 import android.text.TextUtils;
 import com.zac4j.browser.Logger;
 import com.zac4j.browser.util.FileUtil;
@@ -24,7 +25,10 @@ public class PhotoManager {
     private static final String TAG = "PhotoManager";
     public static final int REQUEST_CODE_IMAGE_CHOOSER = 0x01;
 
-    public static String sCameraPhotoPath;
+    private static final String FILE_AUTHORITY = "com.zac4j.browser.fileprovider";
+
+    // File info
+    private static String sCurrentPhotoPath;
 
     /**
      * Create a camera intent for capture image.
@@ -33,27 +37,27 @@ public class PhotoManager {
      * @return a camera intent.
      */
     private static Intent createTakePhotoIntent(Context context) {
-        Intent takePhotoIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (takePhotoIntent.resolveActivity(context.getPackageManager()) != null) {
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (intent.resolveActivity(context.getPackageManager()) != null) {
             // Create the File where the photo should go
             File photoFile = null;
             try {
-                photoFile = ImageUtil.createImageFile();
-                takePhotoIntent.putExtra("PhotoPath", sCameraPhotoPath);
-            } catch (IOException ex) {
+                photoFile = ImageUtil.createImageFile(context);
+            } catch (Exception ex) {
                 // Error occurred while creating the File
                 Logger.e(TAG, "Unable to create Image File", ex);
             }
 
             // Continue only if the File was successfully created
             if (photoFile != null) {
-                sCameraPhotoPath = "file:" + photoFile.getAbsolutePath();
-                takePhotoIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
+                Uri photoUri = FileProvider.getUriForFile(context, FILE_AUTHORITY, photoFile);
+                sCurrentPhotoPath = photoFile.getAbsolutePath();
+                intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
             } else {
-                takePhotoIntent = null;
+                intent = null;
             }
         }
-        return takePhotoIntent;
+        return intent;
     }
 
     /**
@@ -128,6 +132,15 @@ public class PhotoManager {
     }
 
     /**
+     * Get path of current taken photo.
+     *
+     * @return The path of current taken photo.
+     */
+    public static String getCurrentPhotoPath() {
+        return sCurrentPhotoPath;
+    }
+
+    /**
      * Log current infos.
      *
      * @param file given file to print infos.
@@ -135,20 +148,24 @@ public class PhotoManager {
     private static void logFileInfo(File file) {
         Logger.d(TAG, "File path: "
             + file.getAbsolutePath()
-            + " compressed file size: "
+            + ",size: "
             + FileUtil.readFileSize(file.length()));
     }
 
-    public static void clearEmptyFile(Context context) {
-        if (!TextUtils.isEmpty(sCameraPhotoPath)) {
-            String filePath = FileUtil.getPath(context, Uri.parse(sCameraPhotoPath));
-            if (!TextUtils.isEmpty(filePath)) {
-                File photo = new File(filePath);
-                System.out.println("delete photo file exist: "
-                    + photo.exists()
-                    + ", is delete: "
-                    + photo.delete());
-            }
+    /**
+     * Here met a problem that is get path from {@link FileProvider} created uri.
+     *
+     * {@link FileProvider} is only useful for delivering content to other apps. If you are not doing that,
+     * get rid of FileProvider. If your concern is the FileUriExposedException, do not put a Uri in
+     * the Intent, but instead put a String extra that contains the file path
+     * (e.g., path.getAbsolutePath()), or pass the File object itself as a Serializable extra.
+     * One or both of those should avoid the FileUriExposedException
+     */
+    public static void clearEmptyFile() {
+        if (!TextUtils.isEmpty(sCurrentPhotoPath)) {
+            File photo = new File(sCurrentPhotoPath);
+            System.out.println(
+                "delete photo file exist: " + photo.exists() + ", is delete: " + photo.delete());
         }
     }
 }

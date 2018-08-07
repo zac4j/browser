@@ -19,13 +19,12 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import com.zac4j.browser.AppExecutors;
-import com.zac4j.browser.PermissionsDelegate;
 import com.zac4j.browser.R;
 import com.zac4j.browser.photo.PhotoManager;
 import com.zac4j.browser.util.FileUtil;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import java.io.File;
 import java.util.ArrayList;
@@ -37,9 +36,6 @@ import java.util.List;
  */
 
 public class PickerFragment extends Fragment {
-
-    private PermissionsDelegate mPermissionsDelegate;
-    private boolean mHasStoragePermission;
 
     private WebView mWebView;
     private ValueCallback<Uri[]> mFilePathCallback;
@@ -53,13 +49,6 @@ public class PickerFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_image_picker, container, false);
 
         mWebView = rootView.findViewById(R.id.image_picker_webview);
-
-        mPermissionsDelegate = new PermissionsDelegate(getActivity());
-
-        mHasStoragePermission = mPermissionsDelegate.hasStoragePermission();
-        if (!mHasStoragePermission) {
-            mPermissionsDelegate.requestStoragePermission();
-        }
 
         setUpWebViewDefaults(mWebView);
 
@@ -170,8 +159,8 @@ public class PickerFragment extends Fragment {
         if (resultCode == Activity.RESULT_OK) {
             if (data == null) {
                 // If there is not data, then we may have taken a photo
-                Uri photoUri = Uri.parse(PhotoManager.sCameraPhotoPath);
-                results = new Uri[] { photoUri };
+                File photoFile = new File(PhotoManager.getCurrentPhotoPath());
+                results = new Uri[] { Uri.fromFile(photoFile) };
             } else {
                 ClipData clipData = data.getClipData();
                 Uri uri = data.getData();
@@ -190,17 +179,18 @@ public class PickerFragment extends Fragment {
                     results = new Uri[] { uri };
                 }
 
-                PhotoManager.clearEmptyFile(getActivity());
+                PhotoManager.clearEmptyFile();
             }
 
             //processImageResults(getActivity(), results);
 
-            Uri[] finalResults = results;
-            AppExecutors.getInstance()
-                .diskIO()
-                .execute(() -> handleImageResults(getActivity(), finalResults));
+            handleImageResults(getActivity(), results);
+            //Uri[] finalResults = results;
+            //AppExecutors.getInstance()
+            //    .diskIO()
+            //    .execute(() -> handleImageResults(getActivity(), finalResults));
         } else {
-            PhotoManager.clearEmptyFile(getActivity());
+            PhotoManager.clearEmptyFile();
         }
     }
 
@@ -210,8 +200,8 @@ public class PickerFragment extends Fragment {
      * @param context ctx
      * @param uris uris contains image results.
      */
-    private void processImageResults(final Context context, Uri[] uris) {
-        Observable.fromArray(uris)
+    private Disposable processImageResults(final Context context, Uri[] uris) {
+        return Observable.fromArray(uris)
             .subscribeOn(Schedulers.computation())
             .observeOn(AndroidSchedulers.mainThread())
             .filter(uri -> uri != null && !TextUtils.isEmpty(FileUtil.getPath(context, uri)))
@@ -241,6 +231,13 @@ public class PickerFragment extends Fragment {
      */
     private void handleImageResults(Context context, Uri[] uris) {
         List<Uri> uriList = new ArrayList<>();
+
+        if (uris == null || uris.length == 0) {
+            mFilePathCallback.onReceiveValue(null);
+            mFilePathCallback = null;
+            return;
+        }
+
         for (Uri uri : uris) {
             String filePath = FileUtil.getPath(context, uri);
 
