@@ -1,5 +1,6 @@
 package com.zac4j.browser.photo.picker;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -10,15 +11,20 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Toast;
+import com.zac4j.browser.Logger;
 import com.zac4j.browser.R;
 import com.zac4j.browser.photo.PhotoManager;
 import com.zac4j.browser.util.FileUtil;
@@ -29,16 +35,23 @@ import io.reactivex.schedulers.Schedulers;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import pub.devrel.easypermissions.AppSettingsDialog;
+import pub.devrel.easypermissions.EasyPermissions;
+import pub.devrel.easypermissions.PermissionRequest;
 
 /**
  * Image pick page.
  * Created by Zaccc on 2018/2/6.
  */
 
-public class PickerFragment extends Fragment {
+public class PickerFragment extends Fragment implements EasyPermissions.PermissionCallbacks {
+
+    private static final String TAG = "PickerFragment";
 
     private WebView mWebView;
     private ValueCallback<Uri[]> mFilePathCallback;
+
+    public static final int REQUEST_CODE_PERMS = 0x101;
 
     public PickerFragment() {
     }
@@ -58,27 +71,59 @@ public class PickerFragment extends Fragment {
             mWebView.restoreState(savedInstanceState);
         }
 
-        mWebView.setWebChromeClient(new WebChromeClient() {
-            @Override
-            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback,
-                WebChromeClient.FileChooserParams fileChooserParams) {
-                if (mFilePathCallback != null) {
-                    mFilePathCallback.onReceiveValue(null);
-                }
-                mFilePathCallback = filePathCallback;
-
-                PhotoManager.createImageChooser(PickerFragment.this);
-
-                return true;
-            }
-        });
-
         // Load the local index.html file
         if (mWebView.getUrl() == null) {
             mWebView.loadUrl("file:///android_asset/image_picker/index.html");
         }
 
         return rootView;
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        checkOrRequestPerms();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+        @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        // Forward results to EasyPermissions
+        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
+    }
+
+    private void checkOrRequestPerms() {
+        // For Android O, it's should request these two permissions.
+        String[] perms = {
+            Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE
+        };
+
+        if (!EasyPermissions.hasPermissions(getActivity(), perms)) {
+            EasyPermissions.requestPermissions(
+                new PermissionRequest.Builder(this, REQUEST_CODE_PERMS, perms).setRationale(
+                    "This is request file permission rational")
+                    .setPositiveButtonText("OK")
+                    .setNegativeButtonText("Cancel")
+                    .build());
+        }
+    }
+
+    @Override
+    public void onPermissionsGranted(int requestCode, @NonNull List<String> perms) {
+        // todo permission granted
+    }
+
+    @Override
+    public void onPermissionsDenied(int requestCode, @NonNull List<String> perms) {
+        Logger.d(TAG, "onPermissionsDenied:" + requestCode + ":" + perms.size());
+
+        // (Optional) Check whether the user denied any permissions and checked "NEVER ASK AGAIN."
+        // This will display a dialog directing them to enable the permission in app settings.
+        if (EasyPermissions.somePermissionPermanentlyDenied(this, perms)) {
+            new AppSettingsDialog.Builder(this).build().show();
+        }
     }
 
     @Override
@@ -141,13 +186,55 @@ public class PickerFragment extends Fragment {
         // Enable remote debugging via chrome://inspect
         WebView.setWebContentsDebuggingEnabled(true);
 
+        setBrowserClient();
+    }
+
+    private void setBrowserClient() {
         // We set the WebViewClient to ensure links are consumed by the WebView rather
         // than passed to a browser if it can
-        mWebView.setWebViewClient(new WebViewClient());
+        mWebView.setWebViewClient(new WebViewClient() {
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                Logger.d(TAG, "Browser link url: " + url);
+                return super.shouldOverrideUrlLoading(view, url);
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                String url = request.getUrl().toString();
+                Logger.d(TAG, "Browser link url: " + url);
+                return super.shouldOverrideUrlLoading(view, request);
+            }
+        });
+
+        mWebView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback,
+                WebChromeClient.FileChooserParams fileChooserParams) {
+
+                if (mFilePathCallback != null) {
+                    mFilePathCallback.onReceiveValue(null);
+                }
+                mFilePathCallback = filePathCallback;
+
+                PhotoManager.createImageChooser(PickerFragment.this);
+
+                return true;
+            }
+        });
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if (requestCode == AppSettingsDialog.DEFAULT_SETTINGS_REQ_CODE) {
+            // Do something after user returned from app settings screen, like showing a Toast.
+            Toast.makeText(getActivity(), "Returned from app settings to activity",
+                Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (requestCode != PhotoManager.REQUEST_CODE_IMAGE_CHOOSER || mFilePathCallback == null) {
             super.onActivityResult(requestCode, resultCode, data);
             return;
@@ -182,20 +269,14 @@ public class PickerFragment extends Fragment {
                 PhotoManager.clearEmptyFile();
             }
 
-            //processImageResults(getActivity(), results);
-
             handleImageResults(getActivity(), results);
-            //Uri[] finalResults = results;
-            //AppExecutors.getInstance()
-            //    .diskIO()
-            //    .execute(() -> handleImageResults(getActivity(), finalResults));
         } else {
             PhotoManager.clearEmptyFile();
         }
     }
 
     /**
-     * Process image results in reactive way..
+     * Process image results in a reactive way..
      *
      * @param context ctx
      * @param uris uris contains image results.

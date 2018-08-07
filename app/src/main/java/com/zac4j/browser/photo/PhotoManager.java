@@ -9,11 +9,15 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
 import android.text.TextUtils;
+import android.util.Base64;
 import com.zac4j.browser.Logger;
 import com.zac4j.browser.util.FileUtil;
 import com.zac4j.browser.util.ImageUtil;
 import java.io.File;
 import java.io.IOException;
+import okio.BufferedSink;
+import okio.Okio;
+import okio.Sink;
 
 /**
  * Helper class for manage photo pick and other process.
@@ -27,7 +31,7 @@ public class PhotoManager {
 
     private static final String FILE_AUTHORITY = "com.zac4j.browser.fileprovider";
 
-    // File info
+    // photo file path
     private static String sCurrentPhotoPath;
 
     /**
@@ -141,15 +145,35 @@ public class PhotoManager {
     }
 
     /**
-     * Log current infos.
+     * Decode encoded image and save into local directory.
      *
-     * @param file given file to print infos.
+     * @param encodeImage the image file which is encoded by Base64.
+     * @return true if save the file, otherwise false.
+     */
+    public static boolean decodeImageToFile(String encodeImage) {
+        byte[] imageBytes = Base64.decode(encodeImage, Base64.DEFAULT);
+        File file = new File(sCurrentPhotoPath);
+        BufferedSink bufferedSink = null;
+        try {
+            Sink sink = Okio.sink(file);
+            bufferedSink = Okio.buffer(sink);
+            bufferedSink.write(imageBytes);
+        } catch (IOException e) {
+            Logger.d(TAG, e.getMessage());
+        } finally {
+            FileUtil.closeQuietly(bufferedSink);
+        }
+        return file.exists();
+    }
+
+    /**
+     * Log current info.
+     *
+     * @param file given file to print info.
      */
     private static void logFileInfo(File file) {
-        Logger.d(TAG, "File path: "
-            + file.getAbsolutePath()
-            + ",size: "
-            + FileUtil.readFileSize(file.length()));
+        Logger.d(TAG, "File path: " + file.getAbsolutePath() + ",size: " + FileUtil.readFileSize(
+            file.length()));
     }
 
     /**

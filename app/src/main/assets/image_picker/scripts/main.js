@@ -24,6 +24,12 @@ window.onload = function() {
     var fileInputField = document.querySelector('.hiddenFileInput');
     var img = document.querySelector('img');
 
+    img.addEventListener('click', function() {
+        var link = img.getAttribute('src');
+        console.log('image click, src:'+ link);
+        window.location.href='gtjayyz://saveImg?src=' + link;
+    });
+
     loadFileBtn.addEventListener('click', function() {
         fileInputField.click();
     }.bind(this));

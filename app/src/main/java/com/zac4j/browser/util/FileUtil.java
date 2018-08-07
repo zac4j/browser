@@ -8,7 +8,10 @@ import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
+import com.zac4j.browser.Logger;
+import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.text.DecimalFormat;
 
 /**
@@ -182,4 +185,15 @@ public class FileUtil {
             + " "
             + units[digitGroups];
     }
+
+    public static void closeQuietly(Closeable closeable) {
+        if (closeable != null) {
+            try {
+                closeable.close();
+            } catch (IOException e) {
+                Logger.e("close closable", "This is an error while close stream: " + e.getMessage());
+            }
+        }
+    }
+
 }
