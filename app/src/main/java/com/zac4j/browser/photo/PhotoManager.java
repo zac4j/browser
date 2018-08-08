@@ -117,17 +117,17 @@ public class PhotoManager {
             logFileInfo(imageFile);
 
             String filename = imageFile.getName();
-            String destinationPath =
+            String destination =
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
                     .getAbsolutePath() + File.separator + "browser" + File.separator + filename;
 
             // 已压缩过的图片，不再压缩
-            if (TextUtils.equals(imageFilePath, destinationPath)) {
+            if (TextUtils.equals(imageFilePath, destination)) {
                 return imageFile;
             }
 
             file = ImageUtil.compressImage(imageFilePath, 720, 1280, Bitmap.CompressFormat.JPEG, 80,
-                destinationPath);
+                destination);
         } catch (IOException e) {
             Logger.e(TAG, e.getMessage());
         }
@@ -147,24 +147,37 @@ public class PhotoManager {
     /**
      * Decode encoded image and save into local directory.
      *
-     * @param encodeImage the image file which is encoded by Base64.
+     * @param encodedImage the image file which is encoded by Base64.
      * @return true if save the file, otherwise false.
      */
-    public static boolean decodeImageToFile(String encodeImage) {
-        byte[] imageBytes = Base64.decode(encodeImage, Base64.DEFAULT);
-        // fixme this file location should be update.
-        File file = new File(sCurrentPhotoPath);
+    public static boolean decodeImageToFile(String encodedImage) {
+        String imageCode = encodedImage.substring(encodedImage.indexOf(",") + 1);
+        byte[] imageBytes = Base64.decode(imageCode, Base64.DEFAULT);
+
+        File source = new File(sCurrentPhotoPath);
+        String filename = source.getName();
+        File file = new File(getPictureStorageDir(filename));
+        File parentFile = file.getParentFile();
+        if (!parentFile.exists()) {
+            parentFile.mkdirs();
+        }
+
         BufferedSink bufferedSink = null;
         try {
             Sink sink = Okio.sink(file);
             bufferedSink = Okio.buffer(sink);
             bufferedSink.write(imageBytes);
         } catch (IOException e) {
-            Logger.d(TAG, e.getMessage());
+            Logger.e(TAG, e.getMessage());
         } finally {
             FileUtil.closeQuietly(bufferedSink);
         }
         return file.exists();
+    }
+
+    private static String getPictureStorageDir(String filename) {
+        return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            .getAbsolutePath() + File.separator + "zaccc" + File.separator + filename;
     }
 
     /**
@@ -184,7 +197,7 @@ public class PhotoManager {
      * get rid of FileProvider. If your concern is the FileUriExposedException, do not put a Uri in
      * the Intent, but instead put a String extra that contains the file path
      * (e.g., path.getAbsolutePath()), or pass the File object itself as a Serializable extra.
-     * One or both of those should avoid the FileUriExposedException
+     * One or both of those should avoid the FileUriExposedException.
      */
     public static void clearEmptyFile() {
         if (!TextUtils.isEmpty(sCurrentPhotoPath)) {

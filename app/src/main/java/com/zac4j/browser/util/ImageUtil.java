@@ -133,7 +133,7 @@ public class ImageUtil {
      * More info about this method can be found at
      * http://developer.android.com/training/camera/photobasics.html
      */
-    public static File createImageFile(Context context) throws IOException {
+    public static File createImageFile(Context context) {
         // Create an image file name
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
         String imageFileName = "IMG_" + timeStamp + ".jpg";

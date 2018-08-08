@@ -197,6 +197,15 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 Logger.d(TAG, "Browser link url: " + url);
+                if (url.startsWith("gtjayyz://saveImg")) {
+                    String src = url.substring(url.indexOf("?src=") + 1);
+                    // save this file into local storage.
+                    boolean createSuccess = PhotoManager.decodeImageToFile(src);
+                    if (createSuccess) {
+                        Toast.makeText(getActivity(), "文件创建保存成功!", Toast.LENGTH_SHORT).show();
+                    }
+                    return true;
+                }
                 return super.shouldOverrideUrlLoading(view, url);
             }
 
@@ -204,6 +213,13 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
                 Logger.d(TAG, "Browser link url: " + url);
+                if (url.startsWith("gtjayyz://saveImg")) {
+                    Uri uri = Uri.parse(url);
+                    String encodeImage = uri.getQueryParameter("src");
+                    // save this file into local storage.
+                    PhotoManager.decodeImageToFile(encodeImage);
+                    return true;
+                }
                 return super.shouldOverrideUrlLoading(view, request);
             }
         });
