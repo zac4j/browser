@@ -7,17 +7,24 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.content.FileProvider;
 import android.text.TextUtils;
 import android.util.Base64;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
+import com.zac4j.browser.GlideApp;
 import com.zac4j.browser.Logger;
 import com.zac4j.browser.util.FileUtil;
 import com.zac4j.browser.util.ImageUtil;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Sink;
+import okio.Source;
 
 /**
  * Helper class for manage photo pick and other process.
@@ -150,34 +157,97 @@ public class PhotoManager {
      * @param encodedImage the image file which is encoded by Base64.
      * @return true if save the file, otherwise false.
      */
-    public static boolean decodeImageToFile(String encodedImage) {
-        String imageCode = encodedImage.substring(encodedImage.indexOf(",") + 1);
+    public static boolean saveEncodedImage(String encodedImage) {
+        String encodePrefix = "data:image/jpeg;base64,";
+        int beginIndex = encodedImage.indexOf(encodePrefix) + encodePrefix.length();
+        String imageCode = encodedImage.substring(beginIndex);
         byte[] imageBytes = Base64.decode(imageCode, Base64.DEFAULT);
 
-        File source = new File(sCurrentPhotoPath);
-        String filename = source.getName();
-        File file = new File(getPictureStorageDir(filename));
-        File parentFile = file.getParentFile();
+        File file = new File(getPictureStorageDir(getCurrentPhotoName()));
+        return saveImageSource(imageBytes, file);
+    }
+
+    /**
+     * Save network image resource.
+     *
+     * @param context UI context.
+     * @param imageUrl link url of network image.
+     */
+    public static void saveNetworkImage(Context context, String imageUrl) {
+        GlideApp.with(context).asFile().load(imageUrl).into(new SimpleTarget<File>() {
+            @Override
+            public void onResourceReady(@NonNull File resource,
+                @Nullable Transition<? super File> transition) {
+                Logger.d(TAG, "Ok source ready!");
+                File destFile = new File(getPictureStorageDir(getCurrentPhotoName()));
+                try {
+                    saveImageSource(Okio.source(resource), destFile);
+                } catch (FileNotFoundException e) {
+                    Logger.e(TAG, "save file met an error: " + e.getMessage());
+                }
+            }
+        });
+    }
+
+    /**
+     * Save image source into file.
+     *
+     * @param source image resource.
+     * @param dest destination file directory.
+     * @return true if file saved successfully,otherwise false.
+     */
+    private static boolean saveImageSource(Source source, File dest) {
+        File parentFile = dest.getParentFile();
         if (!parentFile.exists()) {
             parentFile.mkdirs();
         }
 
         BufferedSink bufferedSink = null;
         try {
-            Sink sink = Okio.sink(file);
+            Sink sink = Okio.sink(dest);
             bufferedSink = Okio.buffer(sink);
-            bufferedSink.write(imageBytes);
+            bufferedSink.writeAll(source);
         } catch (IOException e) {
             Logger.e(TAG, e.getMessage());
         } finally {
             FileUtil.closeQuietly(bufferedSink);
         }
-        return file.exists();
+        return dest.exists();
+    }
+
+    /**
+     * Save image source into file.
+     *
+     * @param source image resource.
+     * @param dest destination file directory.
+     * @return true if file saved successfully,otherwise false.
+     */
+    private static boolean saveImageSource(byte[] source, File dest) {
+        File parentFile = dest.getParentFile();
+        if (!parentFile.exists()) {
+            parentFile.mkdirs();
+        }
+
+        BufferedSink bufferedSink = null;
+        try {
+            Sink sink = Okio.sink(dest);
+            bufferedSink = Okio.buffer(sink);
+            bufferedSink.write(source);
+        } catch (IOException e) {
+            Logger.e(TAG, e.getMessage());
+        } finally {
+            FileUtil.closeQuietly(bufferedSink);
+        }
+        return dest.exists();
     }
 
     private static String getPictureStorageDir(String filename) {
         return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
             .getAbsolutePath() + File.separator + "zaccc" + File.separator + filename;
+    }
+
+    private static String getCurrentPhotoName() {
+        return new File(sCurrentPhotoPath).getName();
     }
 
     /**

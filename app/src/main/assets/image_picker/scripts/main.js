@@ -27,7 +27,7 @@ window.onload = function() {
     img.addEventListener('click', function() {
         var link = img.getAttribute('src');
         console.log('image click, src:'+ link);
-        window.location.href='gtjayyz://saveImg?src=' + link;
+        window.location.href='gtjayyz://saveImg?src=https://upload-images.jianshu.io/upload_images/2495480-b16b1762ef5015cd.PNG';
     });
 
     loadFileBtn.addEventListener('click', function() {

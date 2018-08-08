@@ -198,9 +198,14 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 Logger.d(TAG, "Browser link url: " + url);
                 if (url.startsWith("gtjayyz://saveImg")) {
-                    String src = url.substring(url.indexOf("?src=") + 1);
+                    String src = url.substring(url.indexOf("?src=") + 5);
+                    boolean createSuccess = false;
                     // save this file into local storage.
-                    boolean createSuccess = PhotoManager.decodeImageToFile(src);
+                    if (src.startsWith("http")) {
+                        PhotoManager.saveNetworkImage(getActivity(), src);
+                    } else if (src.startsWith("data:image")) {
+                        createSuccess = PhotoManager.saveEncodedImage(src);
+                    }
                     if (createSuccess) {
                         Toast.makeText(getActivity(), "文件创建保存成功!", Toast.LENGTH_SHORT).show();
                     }
@@ -214,10 +219,17 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
                 String url = request.getUrl().toString();
                 Logger.d(TAG, "Browser link url: " + url);
                 if (url.startsWith("gtjayyz://saveImg")) {
-                    Uri uri = Uri.parse(url);
-                    String encodeImage = uri.getQueryParameter("src");
+                    String src = url.substring(url.indexOf("?src=") + 5);
+                    boolean createSuccess = false;
                     // save this file into local storage.
-                    PhotoManager.decodeImageToFile(encodeImage);
+                    if (src.startsWith("http")) {
+                        PhotoManager.saveNetworkImage(getActivity(), src);
+                    } else if (src.startsWith("data:image")) {
+                        createSuccess = PhotoManager.saveEncodedImage(src);
+                    }
+                    if (createSuccess) {
+                        Toast.makeText(getActivity(), "文件创建保存成功!", Toast.LENGTH_SHORT).show();
+                    }
                     return true;
                 }
                 return super.shouldOverrideUrlLoading(view, request);
