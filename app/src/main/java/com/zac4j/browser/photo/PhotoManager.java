@@ -12,6 +12,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.FileProvider;
 import android.text.TextUtils;
 import android.util.Base64;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.zac4j.browser.GlideApp;
@@ -36,7 +37,7 @@ public class PhotoManager {
     private static final String TAG = "PhotoManager";
     public static final int REQUEST_CODE_IMAGE_CHOOSER = 0x01;
 
-    private static final String FILE_AUTHORITY = "com.zac4j.browser.fileprovider";
+    private static final String FILE_PROVIDER_AUTHORITY = "com.zac4j.browser.fileprovider";
 
     // photo file path
     private static String sCurrentPhotoPath;
@@ -61,7 +62,8 @@ public class PhotoManager {
 
             // Continue only if the File was successfully created
             if (photoFile != null) {
-                Uri photoUri = FileProvider.getUriForFile(context, FILE_AUTHORITY, photoFile);
+                Uri photoUri =
+                    FileProvider.getUriForFile(context, FILE_PROVIDER_AUTHORITY, photoFile);
                 sCurrentPhotoPath = photoFile.getAbsolutePath();
                 intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
             } else {
@@ -174,19 +176,22 @@ public class PhotoManager {
      * @param imageUrl link url of network image.
      */
     public static void saveNetworkImage(Context context, String imageUrl) {
-        GlideApp.with(context).asFile().load(imageUrl).into(new SimpleTarget<File>() {
-            @Override
-            public void onResourceReady(@NonNull File resource,
-                @Nullable Transition<? super File> transition) {
-                Logger.d(TAG, "Ok source ready!");
-                File destFile = new File(getPictureStorageDir(getCurrentPhotoName()));
-                try {
-                    saveImageSource(Okio.source(resource), destFile);
-                } catch (FileNotFoundException e) {
-                    Logger.e(TAG, "save file met an error: " + e.getMessage());
+        GlideApp.with(context)
+            .asFile()
+            .load(imageUrl)
+            .into(new SimpleTarget<File>() {
+                @Override
+                public void onResourceReady(@NonNull File resource,
+                    @Nullable Transition<? super File> transition) {
+                    Logger.d(TAG, "image file source ready!");
+                    File destFile = new File(getPictureStorageDir(getCurrentPhotoName()));
+                    try {
+                        saveImageSource(Okio.source(resource), destFile);
+                    } catch (FileNotFoundException e) {
+                        Logger.e(TAG, "save file met an error: " + e.getMessage());
+                    }
                 }
-            }
-        });
+            });
     }
 
     /**
