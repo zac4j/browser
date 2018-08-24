@@ -1,10 +1,9 @@
-package com.zac4j.browser.photo.picker;
+package com.zac4j.browser.ui;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.Fragment;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
@@ -13,6 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,7 +26,7 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 import com.zac4j.browser.Logger;
 import com.zac4j.browser.R;
-import com.zac4j.browser.photo.PhotoManager;
+import com.zac4j.browser.util.photo.PhotoManager;
 import com.zac4j.browser.util.FileUtil;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -56,10 +56,11 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
     public PickerFragment() {
     }
 
+    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, final ViewGroup container,
-        Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_image_picker, container, false);
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+        @Nullable Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_photo_picker, container, false);
 
         mWebView = rootView.findViewById(R.id.image_picker_webview);
 

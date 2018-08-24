@@ -1,4 +1,7 @@
 <resources>
-  <string name="app_name">browser</string>
-  <string name="main_pick_image">Image Picker</string>
+    <string name="app_name">browser</string>
+    <string name="main_pick_image">Image Picker</string>
+    <string name="bottom_nav_photo">Photo</string>
+    <string name="bottom_nav_system">System</string>
+    <string name="bottom_nav_perms">Permission</string>
 </resources>

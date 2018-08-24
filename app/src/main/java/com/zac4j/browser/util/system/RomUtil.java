@@ -164,7 +164,7 @@ public class RomUtil {
             RomPropertyKeys.COLOROS_THEME_VERSION) || sProps.containsKey(
             RomPropertyKeys.COLOROS_ROM_VERSION)) {
             version = sProps.getProperty(RomPropertyKeys.COLOROS_ROM_VERSION);
-            Matcher matcher = Pattern.compile("ColorOS([\\d.]+)").matcher(version);
+            Matcher matcher = Pattern.compile("\\[ColorOS([\\d.]+)]").matcher(version);
             if (!Utils.isEmptyString(version) && matcher.find()) {
                 return matcher.group(1);
             }
@@ -189,7 +189,7 @@ public class RomUtil {
             RomPropertyKeys.FUNTOUCHOS_OS_VERSION) || sProps.containsKey(
             RomPropertyKeys.FUNTOUCHOS_DISPLAY_ID)) {
             version = sProps.getProperty(RomPropertyKeys.FUNTOUCHOS_OS_VERSION);
-            if (!Utils.isEmptyString(version) && version.matches("[\\d.]+")) {
+            if (!Utils.isEmptyString(version) && version.matches("\\[[\\d.]+]")) {
                 return version;
             }
         }
@@ -213,7 +213,7 @@ public class RomUtil {
             RomPropertyKeys.FLYME_PUBLISHED)) {
             version = sProps.getProperty(RomPropertyKeys.DISPLAY_ID);
             // Flyme OS 4.5.4.2U
-            Matcher matcher = Pattern.compile("Flyme[^\\d]*([\\d.]+)[^\\d]*").matcher(version);
+            Matcher matcher = Pattern.compile("\\[Flyme[^\\d]*([\\d.]+)[^\\d]*]").matcher(version);
             if (!Utils.isEmptyString(version) && matcher.find()) {
                 return matcher.group(1);
             }
@@ -238,7 +238,7 @@ public class RomUtil {
             RomPropertyKeys.EUI_NAME) || sProps.containsKey(RomPropertyKeys.EUI_MODEL)) {
             version = sProps.getProperty(RomPropertyKeys.EUI_VERSION);
             // 5.9.023S
-            Matcher matcher = Pattern.compile("([\\d.]+)[^\\d]*").matcher(version);
+            Matcher matcher = Pattern.compile("\\[([\\d.]+)[^\\d]*]").matcher(version);
             if (!TextUtils.isEmpty(version) && matcher.find()) {
                 return matcher.group(1);
             }
@@ -262,7 +262,7 @@ public class RomUtil {
             RomPropertyKeys.AMIGO_SYSTEM_UI_SUPPORT)) {
             version = sProps.getProperty(RomPropertyKeys.DISPLAY_ID);
             // "amigo3.5.1"
-            Matcher matcher = Pattern.compile("amigo([\\d.]+)[a-zA-Z]*").matcher(version);
+            Matcher matcher = Pattern.compile("\\[amigo([\\d.]+)[a-zA-Z]*]").matcher(version);
             if (!TextUtils.isEmpty(version) && matcher.find()) {
                 return matcher.group(1);
             }

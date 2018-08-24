@@ -1,6 +1,5 @@
-package com.zac4j.browser.photo;
+package com.zac4j.browser.util.photo;
 
-import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -9,10 +8,10 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.support.v4.content.FileProvider;
 import android.text.TextUtils;
 import android.util.Base64;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.zac4j.browser.GlideApp;
@@ -176,22 +175,19 @@ public class PhotoManager {
      * @param imageUrl link url of network image.
      */
     public static void saveNetworkImage(Context context, String imageUrl) {
-        GlideApp.with(context)
-            .asFile()
-            .load(imageUrl)
-            .into(new SimpleTarget<File>() {
-                @Override
-                public void onResourceReady(@NonNull File resource,
-                    @Nullable Transition<? super File> transition) {
-                    Logger.d(TAG, "image file source ready!");
-                    File destFile = new File(getPictureStorageDir(getCurrentPhotoName()));
-                    try {
-                        saveImageSource(Okio.source(resource), destFile);
-                    } catch (FileNotFoundException e) {
-                        Logger.e(TAG, "save file met an error: " + e.getMessage());
-                    }
+        GlideApp.with(context).asFile().load(imageUrl).into(new SimpleTarget<File>() {
+            @Override
+            public void onResourceReady(@NonNull File resource,
+                @Nullable Transition<? super File> transition) {
+                Logger.d(TAG, "image file source ready!");
+                File destFile = new File(getPictureStorageDir(getCurrentPhotoName()));
+                try {
+                    saveImageSource(Okio.source(resource), destFile);
+                } catch (FileNotFoundException e) {
+                    Logger.e(TAG, "save file met an error: " + e.getMessage());
                 }
-            });
+            }
+        });
     }
 
     /**

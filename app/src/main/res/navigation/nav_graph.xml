@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@id/navigation_graph"
+    app:startDestination="@id/nav_graph_photo">
+
+    <fragment
+        android:id="@id/nav_graph_photo"
+        android:name="com.zac4j.browser.ui.PickerFragment"
+        android:label="PhotoPicker"
+        tools:layout="@layout/fragment_photo_picker" />
+    <fragment
+        android:id="@id/nav_graph_system"
+        android:name="com.zac4j.browser.ui.SystemReaderFragment"
+        android:label="SystemReader"
+        tools:layout="@layout/fragment_system_reader" />
+    <fragment
+        android:id="@id/nav_graph_perms"
+        android:name="com.zac4j.browser.ui.PermsissionJumperFragment"
+        android:label="PermissionHelper"
+        tools:layout="@layout/fragment_permission_setting" />
+</navigation>
