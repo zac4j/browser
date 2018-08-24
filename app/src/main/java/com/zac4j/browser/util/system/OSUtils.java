@@ -1,4 +1,4 @@
-package com.zac4j.browser.util;
+package com.zac4j.browser.util.system;
 
 import android.text.TextUtils;
 import com.zac4j.browser.Logger;

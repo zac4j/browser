@@ -4,7 +4,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import com.zac4j.browser.R;
-import com.zac4j.browser.util.RomUtil;
+import com.zac4j.browser.util.system.RomUtil;
 
 /**
  * A WebView for pick image
@@ -20,7 +20,7 @@ public class PickerActivity extends AppCompatActivity {
 
         String type = RomUtil.getRomType();
 
-        System.out.println("Rom type: " + type + ", Rom version: ");
+        System.out.println("Rom type: " + type + ", Rom version: " + RomUtil.getRomVersion(type));
 
         if (savedInstanceState == null) {
             getFragmentManager().beginTransaction()
