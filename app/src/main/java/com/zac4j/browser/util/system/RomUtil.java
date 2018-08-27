@@ -19,9 +19,7 @@ public class RomUtil {
 
     private static final String TAG = "RomUtil";
 
-    private static final String DEFAULT_ROM_TYPE = "Android";
-
-    private static final String DEFAULT_ROM_VERSION = "Android" + Build.VERSION.RELEASE;
+    private static final String DEFAULT_ROM_VERSION = Build.VERSION.RELEASE;
 
     private static Properties sProps;
 
@@ -39,50 +37,40 @@ public class RomUtil {
         }
     }
 
-    public static String getRomType() {
+    public static Rom getRom() {
         String manufacturer = Build.MANUFACTURER.toLowerCase();
+        Rom rom = new Rom();
         switch (manufacturer) {
             case Manufacturer.XIAOMI:
-                return Rom.MIUI;
+                rom.setType(Rom.MIUI);
+                rom.setVersion(getMiuiVersion());
+                break;
             case Manufacturer.HUAWEI:
-                return Rom.EMUI;
+                rom.setType(Rom.EMUI);
+                rom.setVersion(getEmuiVersion());
+                break;
             case Manufacturer.OPPO:
-                return Rom.ColorOS;
+                rom.setType(Rom.ColorOS);
+                rom.setVersion(getColorOSVersion());
+                break;
             case Manufacturer.VIVO:
-                return Rom.FuntouchOS;
+                rom.setType(Rom.FuntouchOS);
+                rom.setVersion(getFuntouchOSVersion());
+                break;
             case Manufacturer.MEIZU:
-                return Rom.Flyme;
+                rom.setType(Rom.Flyme);
+                rom.setVersion(getFlymeOSVersion());
+                break;
             case Manufacturer.LETV:
-                return Rom.EUI;
+                rom.setType(Rom.EUI);
+                rom.setVersion(getEuiVersion());
+                break;
             case Manufacturer.GIONEE:
-                return Rom.AmigoOS;
+                rom.setType(Rom.AmigoOS);
+                rom.setVersion(getAmigoOSVersion());
+                break;
         }
-        return DEFAULT_ROM_TYPE;
-    }
-
-    public static String getRomVersion(String romType) {
-
-        if (Utils.isEmptyString(romType)) {
-            return Build.VERSION.RELEASE;
-        }
-
-        switch (romType) {
-            case Rom.MIUI:
-                return getMiuiVersion();
-            case Rom.EMUI:
-                return getEmuiVersion();
-            case Rom.ColorOS:
-                return getColorOSVersion();
-            case Rom.FuntouchOS:
-                return getFuntouchOSVersion();
-            case Rom.EUI:
-                return getEuiVersion();
-            case Rom.Flyme:
-                return getFlymeOSVersion();
-            case Rom.AmigoOS:
-                return getAmigoOSVersion();
-        }
-        return DEFAULT_ROM_VERSION;
+        return rom;
     }
 
     /**
@@ -110,7 +98,7 @@ public class RomUtil {
         if (sProps.contains(RomPropertyKeys.MIUI_VERSION)) {
             version = sProps.getProperty(RomPropertyKeys.MIUI_VERSION);
             if (!Utils.isEmptyString(version) && version.matches("\\[[\\d.]+]")) {
-                return version;
+                version = obtainMidProperty(version);
             }
         }
 
@@ -189,8 +177,9 @@ public class RomUtil {
             RomPropertyKeys.FUNTOUCHOS_OS_VERSION) || sProps.containsKey(
             RomPropertyKeys.FUNTOUCHOS_DISPLAY_ID)) {
             version = sProps.getProperty(RomPropertyKeys.FUNTOUCHOS_OS_VERSION);
+            // FuntouchOS_3.1
             if (!Utils.isEmptyString(version) && version.matches("\\[[\\d.]+]")) {
-                return version;
+                version = obtainMidProperty(version);
             }
         }
         return version;

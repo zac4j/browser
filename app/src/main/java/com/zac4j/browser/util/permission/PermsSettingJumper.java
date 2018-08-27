@@ -1,4 +1,4 @@
-package com.zac4j.browser.util.system;
+package com.zac4j.browser.util.permission;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
+import com.zac4j.browser.util.system.Manufacturer;
 
 /**
  * Created by Zaccc on 2018/8/24.

@@ -1,7 +1,10 @@
 <resources>
     <string name="app_name">browser</string>
     <string name="main_pick_image">Image Picker</string>
+    <!--bottom navigation names-->
     <string name="bottom_nav_photo">Photo</string>
     <string name="bottom_nav_system">System</string>
     <string name="bottom_nav_perms">Permission</string>
+    <!--bottom navigation names-->
+    <string name="jump_to_perms_set_page">Permission Settings</string>
 </resources>

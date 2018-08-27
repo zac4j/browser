@@ -17,7 +17,7 @@
         tools:layout="@layout/fragment_system_reader" />
     <fragment
         android:id="@id/nav_graph_perms"
-        android:name="com.zac4j.browser.ui.PermsissionJumperFragment"
+        android:name="com.zac4j.browser.ui.PermissionJumperFragment"
         android:label="PermissionHelper"
         tools:layout="@layout/fragment_permission_setting" />
 </navigation>

@@ -12,5 +12,7 @@
     <item name="nav_graph_photo" type="id"/>
     <item name="nav_graph_system" type="id"/>
     <item name="nav_graph_perms" type="id"/>
+    <item name="root_layout" type="id"/>
+    <item name="perms_set_btn_go" type="id"/>
 
 </resources>
