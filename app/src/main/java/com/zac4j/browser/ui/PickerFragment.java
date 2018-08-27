@@ -35,6 +35,7 @@ import io.reactivex.schedulers.Schedulers;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import pub.devrel.easypermissions.AppSettingsDialog;
 import pub.devrel.easypermissions.EasyPermissions;
 import pub.devrel.easypermissions.PermissionRequest;
@@ -56,8 +57,7 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
     public PickerFragment() {
     }
 
-    @Nullable
-    @Override
+    @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
         @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_photo_picker, container, false);
@@ -80,14 +80,12 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
         return rootView;
     }
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
+    @Override public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         checkOrRequestPerms();
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+    @Override public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
         @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
@@ -101,7 +99,7 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
             Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE
         };
 
-        if (!EasyPermissions.hasPermissions(getActivity(), perms)) {
+        if (!EasyPermissions.hasPermissions(Objects.requireNonNull(getActivity()), perms)) {
             EasyPermissions.requestPermissions(
                 new PermissionRequest.Builder(this, REQUEST_CODE_PERMS, perms).setRationale(
                     "This is request file permission rational")
@@ -111,13 +109,11 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
         }
     }
 
-    @Override
-    public void onPermissionsGranted(int requestCode, @NonNull List<String> perms) {
+    @Override public void onPermissionsGranted(int requestCode, @NonNull List<String> perms) {
         // todo permission granted
     }
 
-    @Override
-    public void onPermissionsDenied(int requestCode, @NonNull List<String> perms) {
+    @Override public void onPermissionsDenied(int requestCode, @NonNull List<String> perms) {
         Logger.d(TAG, "onPermissionsDenied:" + requestCode + ":" + perms.size());
 
         // (Optional) Check whether the user denied any permissions and checked "NEVER ASK AGAIN."
@@ -127,8 +123,7 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
         }
     }
 
-    @Override
-    public void onDestroyView() {
+    @Override public void onDestroyView() {
         super.onDestroyView();
         destroyWebView();
     }
@@ -166,8 +161,7 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
      * Convenience method to set some generic defaults for a
      * given WebView
      */
-    @SuppressLint("SetJavaScriptEnabled")
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    @SuppressLint("SetJavaScriptEnabled") @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     private void setUpWebViewDefaults(WebView webView) {
         WebSettings settings = webView.getSettings();
 
@@ -195,8 +189,7 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
         // than passed to a browser if it can
         mWebView.setWebViewClient(new WebViewClient() {
 
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            @Override public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 Logger.d(TAG, "Browser link url: " + url);
                 if (url.startsWith("gtjayyz://saveImg")) {
                     String src = url.substring(url.indexOf("?src=") + 5);
@@ -254,8 +247,7 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
         });
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    @Override public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         if (requestCode == AppSettingsDialog.DEFAULT_SETTINGS_REQ_CODE) {
             // Do something after user returned from app settings screen, like showing a Toast.
@@ -327,7 +319,7 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
             .map(Uri::fromFile)
             .toList()
             .subscribe(uriList -> {
-                Uri[] uris1 = uriList.toArray(new Uri[uriList.size()]);
+                Uri[] uris1 = uriList.toArray(new Uri[0]);
                 mFilePathCallback.onReceiveValue(uris1);
                 mFilePathCallback = null;
             });
@@ -361,7 +353,7 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
             }
             uriList.add(Uri.fromFile(image));
         }
-        Uri[] uris1 = uriList.toArray(new Uri[uriList.size()]);
+        Uri[] uris1 = uriList.toArray(new Uri[0]);
         mFilePathCallback.onReceiveValue(uris1);
         mFilePathCallback = null;
     }
