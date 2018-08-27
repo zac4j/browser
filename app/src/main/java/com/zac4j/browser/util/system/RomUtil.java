@@ -58,7 +58,7 @@ public class RomUtil {
                 rom.setVersion(getFuntouchOSVersion());
                 break;
             case Manufacturer.MEIZU:
-                rom.setType(Rom.Flyme);
+                rom.setType(Rom.FlymeOS);
                 rom.setVersion(getFlymeOSVersion());
                 break;
             case Manufacturer.LETV:
@@ -69,6 +69,13 @@ public class RomUtil {
                 rom.setType(Rom.AmigoOS);
                 rom.setVersion(getAmigoOSVersion());
                 break;
+            case Manufacturer.SMARTISAN:
+                rom.setType(Rom.SmartisanOS);
+                rom.setVersion(getSmartisanOSVersion());
+                break;
+            default:
+                rom.setType("Android");
+                rom.setVersion(Build.VERSION.RELEASE);
         }
         return rom;
     }
@@ -89,7 +96,7 @@ public class RomUtil {
         if (sProps.containsKey(RomPropertyKeys.MIUI_VERSION_CODE) || sProps.containsKey(
             RomPropertyKeys.MIUI_VERSION_NANE)) {
             version = sProps.getProperty(RomPropertyKeys.MIUI_VERSION_NANE);
-            if (!Utils.isEmptyString(version) && version.matches("\\[[Vv]\\d+]")) {
+            if (Utils.isNotEmptyString(version) && version.matches("\\[[Vv]\\d+]")) {
                 version = obtainMidProperty(version);
             }
         }
@@ -97,7 +104,7 @@ public class RomUtil {
         // 5, 6, 7
         if (sProps.contains(RomPropertyKeys.MIUI_VERSION)) {
             version = sProps.getProperty(RomPropertyKeys.MIUI_VERSION);
-            if (!Utils.isEmptyString(version) && version.matches("\\[[\\d.]+]")) {
+            if (Utils.isNotEmptyString(version) && version.matches("\\[[\\d.]+]")) {
                 version = obtainMidProperty(version);
             }
         }
@@ -124,7 +131,7 @@ public class RomUtil {
             version = sProps.getProperty(RomPropertyKeys.EMUI_VERSION);
             // EmotionUI_3.0
             Matcher matcher = Pattern.compile("\\[EmotionUI_([\\d.]+)]").matcher(version);
-            if (!Utils.isEmptyString(version) && matcher.find()) {
+            if (Utils.isNotEmptyString(version) && matcher.find()) {
                 try {
                     return matcher.group(1);
                 } catch (Exception e) {
@@ -153,7 +160,7 @@ public class RomUtil {
             RomPropertyKeys.COLOROS_ROM_VERSION)) {
             version = sProps.getProperty(RomPropertyKeys.COLOROS_ROM_VERSION);
             Matcher matcher = Pattern.compile("\\[ColorOS([\\d.]+)]").matcher(version);
-            if (!Utils.isEmptyString(version) && matcher.find()) {
+            if (Utils.isNotEmptyString(version) && matcher.find()) {
                 return matcher.group(1);
             }
         }
@@ -177,8 +184,8 @@ public class RomUtil {
             RomPropertyKeys.FUNTOUCHOS_OS_VERSION) || sProps.containsKey(
             RomPropertyKeys.FUNTOUCHOS_DISPLAY_ID)) {
             version = sProps.getProperty(RomPropertyKeys.FUNTOUCHOS_OS_VERSION);
-            // FuntouchOS_3.1
-            if (!Utils.isEmptyString(version) && version.matches("\\[[\\d.]+]")) {
+            // [3.1]
+            if (Utils.isNotEmptyString(version) && version.matches("\\[[\\d.]+]")) {
                 version = obtainMidProperty(version);
             }
         }
@@ -203,7 +210,7 @@ public class RomUtil {
             version = sProps.getProperty(RomPropertyKeys.DISPLAY_ID);
             // Flyme OS 4.5.4.2U
             Matcher matcher = Pattern.compile("\\[Flyme[^\\d]*([\\d.]+)[^\\d]*]").matcher(version);
-            if (!Utils.isEmptyString(version) && matcher.find()) {
+            if (Utils.isNotEmptyString(version) && matcher.find()) {
                 return matcher.group(1);
             }
         }
@@ -228,7 +235,7 @@ public class RomUtil {
             version = sProps.getProperty(RomPropertyKeys.EUI_VERSION);
             // 5.9.023S
             Matcher matcher = Pattern.compile("\\[([\\d.]+)[^\\d]*]").matcher(version);
-            if (!TextUtils.isEmpty(version) && matcher.find()) {
+            if (Utils.isNotEmptyString(version) && matcher.find()) {
                 return matcher.group(1);
             }
         }
@@ -252,8 +259,31 @@ public class RomUtil {
             version = sProps.getProperty(RomPropertyKeys.DISPLAY_ID);
             // "amigo3.5.1"
             Matcher matcher = Pattern.compile("\\[amigo([\\d.]+)[a-zA-Z]*]").matcher(version);
-            if (!TextUtils.isEmpty(version) && matcher.find()) {
+            if (Utils.isNotEmptyString(version) && matcher.find()) {
                 return matcher.group(1);
+            }
+        }
+        return version;
+    }
+
+    /**
+     * Get Smartisan OS version.
+     *
+     * @return Smartisan OS version.
+     */
+    private static String getSmartisanOSVersion() {
+        String version = DEFAULT_ROM_VERSION;
+
+        if (sProps == null) {
+            return version;
+        }
+
+        // ro.smartisan.version=2.1.2-2015120822-user-511
+        if (sProps.containsKey(RomPropertyKeys.SMARTISAN_VERSION)) {
+            version = sProps.getProperty(RomPropertyKeys.SMARTISAN_VERSION);
+            String[] versionTexts = version.split("-");
+            if (versionTexts.length != 0) {
+                version = versionTexts[0];
             }
         }
         return version;

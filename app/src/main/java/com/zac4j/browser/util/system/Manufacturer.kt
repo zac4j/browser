@@ -15,5 +15,6 @@ class Manufacturer {
         const val MEIZU = "meizu"
         const val SONY = "sony"
         const val LG = "lg"
+        const val SMARTISAN = "smartisan"
     }
 }

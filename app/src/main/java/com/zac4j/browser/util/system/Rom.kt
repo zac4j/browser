@@ -9,12 +9,13 @@ class Rom {
     companion object {
         const val DEFAULT = "Android"
         const val MIUI = "MIUI"
-        const val Flyme = "Flyme"
+        const val FlymeOS = "Flyme"
         const val EMUI = "EMUI"
         const val ColorOS = "ColorOS"
         const val FuntouchOS = "FuntouchOS"
         const val EUI = "EUI"
         const val AmigoOS = "AmigoOS"
+        const val SmartisanOS = "SmartisanOS"
     }
 
     var type: String = DEFAULT

@@ -40,10 +40,13 @@ class RomPropertyKeys {
         const val FLYME_PUBLISHED = "[ro.flyme.published]" // "true"
         const val FLYME_SETUP = "[ro.meizu.setupwizard.flyme]" // "true"
 
-        /** Gionee: amigo  */
+        /** Gionee: Amigo  */
         const val AMIGO_ROM_VERSION = "[ro.gn.gnromvernumber]"
         // "GIONEE ROM5.0.16"
         const val AMIGO_SYSTEM_UI_SUPPORT = "[ro.gn.amigo.systemui.support]"
+
+        /** 🔨 : SmartisanOS */
+        const val SMARTISAN_VERSION = "ro.smartisan.version"
     }
 
 }

@@ -20,7 +20,7 @@ public class Utils {
         }
     }
 
-    public static boolean isEmptyString(String string) {
-        return TextUtils.isEmpty(string) || "null".equals(string.toLowerCase());
+    public static boolean isNotEmptyString(String string) {
+        return !TextUtils.isEmpty(string) && !"null".equalsIgnoreCase(string);
     }
 }
