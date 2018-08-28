@@ -109,7 +109,7 @@ public class RomUtil {
             }
         }
 
-        return version;
+        return Utils.isNotEmptyString(version) ? version : DEFAULT_ROM_VERSION;
     }
 
     /**
@@ -129,17 +129,15 @@ public class RomUtil {
             RomPropertyKeys.EMUI_API_LEVEL) || sProps.containsKey(
             RomPropertyKeys.EMUI_SYSTEM_VERSION)) {
             version = sProps.getProperty(RomPropertyKeys.EMUI_VERSION);
-            // EmotionUI_3.0
-            Matcher matcher = Pattern.compile("\\[EmotionUI_([\\d.]+)]").matcher(version);
-            if (Utils.isNotEmptyString(version) && matcher.find()) {
-                try {
+            if (Utils.isNotEmptyString(version)) {
+                // EmotionUI_3.0
+                Matcher matcher = Pattern.compile("\\[EmotionUI_([\\d.]+)]").matcher(version);
+                if (matcher.find()) {
                     return matcher.group(1);
-                } catch (Exception e) {
-                    Logger.e(TAG, "get EmotionUI version error: " + e.getMessage());
                 }
             }
         }
-        return version;
+        return Utils.isNotEmptyString(version) ? version : DEFAULT_ROM_VERSION;
     }
 
     /**
@@ -159,12 +157,15 @@ public class RomUtil {
             RomPropertyKeys.COLOROS_THEME_VERSION) || sProps.containsKey(
             RomPropertyKeys.COLOROS_ROM_VERSION)) {
             version = sProps.getProperty(RomPropertyKeys.COLOROS_ROM_VERSION);
-            Matcher matcher = Pattern.compile("\\[ColorOS([\\d.]+)]").matcher(version);
-            if (Utils.isNotEmptyString(version) && matcher.find()) {
-                return matcher.group(1);
+            if (Utils.isNotEmptyString(version)) {
+                // ColorOS
+                Matcher matcher = Pattern.compile("\\[ColorOS([\\d.]+)]").matcher(version);
+                if (matcher.find()) {
+                    return matcher.group(1);
+                }
             }
         }
-        return version;
+        return Utils.isNotEmptyString(version) ? version : DEFAULT_ROM_VERSION;
     }
 
     /**
@@ -189,7 +190,7 @@ public class RomUtil {
                 version = obtainMidProperty(version);
             }
         }
-        return version;
+        return Utils.isNotEmptyString(version) ? version : DEFAULT_ROM_VERSION;
     }
 
     /**
@@ -208,13 +209,16 @@ public class RomUtil {
         if (sProps.containsKey(RomPropertyKeys.FLYME_SETUP) || sProps.containsKey(
             RomPropertyKeys.FLYME_PUBLISHED)) {
             version = sProps.getProperty(RomPropertyKeys.DISPLAY_ID);
-            // Flyme OS 4.5.4.2U
-            Matcher matcher = Pattern.compile("\\[Flyme[^\\d]*([\\d.]+)[^\\d]*]").matcher(version);
-            if (Utils.isNotEmptyString(version) && matcher.find()) {
-                return matcher.group(1);
+            if (Utils.isNotEmptyString(version)) {
+                // Flyme OS 4.5.4.2U
+                Matcher matcher =
+                    Pattern.compile("\\[Flyme[^\\d]*([\\d.]+)[^\\d]*]").matcher(version);
+                if (matcher.find()) {
+                    return matcher.group(1);
+                }
             }
         }
-        return version;
+        return Utils.isNotEmptyString(version) ? version : DEFAULT_ROM_VERSION;
     }
 
     /**
@@ -233,13 +237,15 @@ public class RomUtil {
         if (sProps.containsKey(RomPropertyKeys.EUI_VERSION) || sProps.containsKey(
             RomPropertyKeys.EUI_NAME) || sProps.containsKey(RomPropertyKeys.EUI_MODEL)) {
             version = sProps.getProperty(RomPropertyKeys.EUI_VERSION);
-            // 5.9.023S
-            Matcher matcher = Pattern.compile("\\[([\\d.]+)[^\\d]*]").matcher(version);
-            if (Utils.isNotEmptyString(version) && matcher.find()) {
-                return matcher.group(1);
+            if (Utils.isNotEmptyString(version)) {
+                // 5.9.023S
+                Matcher matcher = Pattern.compile("\\[([\\d.]+)[^\\d]*]").matcher(version);
+                if (matcher.find()) {
+                    return matcher.group(1);
+                }
             }
         }
-        return version;
+        return Utils.isNotEmptyString(version) ? version : DEFAULT_ROM_VERSION;
     }
 
     /**
@@ -257,13 +263,15 @@ public class RomUtil {
         if (sProps.containsKey(RomPropertyKeys.AMIGO_ROM_VERSION) || sProps.containsKey(
             RomPropertyKeys.AMIGO_SYSTEM_UI_SUPPORT)) {
             version = sProps.getProperty(RomPropertyKeys.DISPLAY_ID);
-            // "amigo3.5.1"
-            Matcher matcher = Pattern.compile("\\[amigo([\\d.]+)[a-zA-Z]*]").matcher(version);
-            if (Utils.isNotEmptyString(version) && matcher.find()) {
-                return matcher.group(1);
+            if (Utils.isNotEmptyString(version)) {
+                // "amigo3.5.1"
+                Matcher matcher = Pattern.compile("\\[amigo([\\d.]+)[a-zA-Z]*]").matcher(version);
+                if (matcher.find()) {
+                    return matcher.group(1);
+                }
             }
         }
-        return version;
+        return Utils.isNotEmptyString(version) ? version : DEFAULT_ROM_VERSION;
     }
 
     /**
@@ -286,7 +294,7 @@ public class RomUtil {
                 version = versionTexts[0];
             }
         }
-        return version;
+        return Utils.isNotEmptyString(version) ? version : DEFAULT_ROM_VERSION;
     }
 
     /**
