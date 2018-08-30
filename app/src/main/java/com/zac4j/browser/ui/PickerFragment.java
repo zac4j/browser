@@ -26,8 +26,8 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 import com.zac4j.browser.Logger;
 import com.zac4j.browser.R;
-import com.zac4j.browser.util.photo.PhotoManager;
 import com.zac4j.browser.util.FileUtil;
+import com.zac4j.browser.util.photo.PhotoManager;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
@@ -57,7 +57,8 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
     public PickerFragment() {
     }
 
-    @Nullable @Override
+    @Nullable
+    @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
         @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_photo_picker, container, false);
@@ -80,12 +81,14 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
         return rootView;
     }
 
-    @Override public void onCreate(@Nullable Bundle savedInstanceState) {
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         checkOrRequestPerms();
     }
 
-    @Override public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
         @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
@@ -109,11 +112,13 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
         }
     }
 
-    @Override public void onPermissionsGranted(int requestCode, @NonNull List<String> perms) {
+    @Override
+    public void onPermissionsGranted(int requestCode, @NonNull List<String> perms) {
         // todo permission granted
     }
 
-    @Override public void onPermissionsDenied(int requestCode, @NonNull List<String> perms) {
+    @Override
+    public void onPermissionsDenied(int requestCode, @NonNull List<String> perms) {
         Logger.d(TAG, "onPermissionsDenied:" + requestCode + ":" + perms.size());
 
         // (Optional) Check whether the user denied any permissions and checked "NEVER ASK AGAIN."
@@ -123,7 +128,8 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
         }
     }
 
-    @Override public void onDestroyView() {
+    @Override
+    public void onDestroyView() {
         super.onDestroyView();
         destroyWebView();
     }
@@ -161,7 +167,8 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
      * Convenience method to set some generic defaults for a
      * given WebView
      */
-    @SuppressLint("SetJavaScriptEnabled") @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    @SuppressLint("SetJavaScriptEnabled")
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     private void setUpWebViewDefaults(WebView webView) {
         WebSettings settings = webView.getSettings();
 
@@ -189,7 +196,8 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
         // than passed to a browser if it can
         mWebView.setWebViewClient(new WebViewClient() {
 
-            @Override public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 Logger.d(TAG, "Browser link url: " + url);
                 if (url.startsWith("gtjayyz://saveImg")) {
                     String src = url.substring(url.indexOf("?src=") + 5);
@@ -247,7 +255,8 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
         });
     }
 
-    @Override public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         if (requestCode == AppSettingsDialog.DEFAULT_SETTINGS_REQ_CODE) {
             // Do something after user returned from app settings screen, like showing a Toast.
@@ -286,13 +295,9 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
                 if (uri != null) {
                     results = new Uri[] { uri };
                 }
-
-                PhotoManager.clearEmptyFile();
             }
 
             handleImageResults(getActivity(), results);
-        } else {
-            PhotoManager.clearEmptyFile();
         }
     }
 

@@ -61,10 +61,9 @@ public class PhotoManager {
 
             // Continue only if the File was successfully created
             if (photoFile != null) {
-                Uri photoUri =
-                    FileProvider.getUriForFile(context, FILE_PROVIDER_AUTHORITY, photoFile);
+                Uri uri = FileProvider.getUriForFile(context, FILE_PROVIDER_AUTHORITY, photoFile);
                 sCurrentPhotoPath = photoFile.getAbsolutePath();
-                intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+                intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
             } else {
                 intent = null;
             }

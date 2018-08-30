@@ -108,7 +108,6 @@ public class RomUtil {
                 version = obtainMidProperty(version);
             }
         }
-
         return Utils.isNotEmptyString(version) ? version : DEFAULT_ROM_VERSION;
     }
 
