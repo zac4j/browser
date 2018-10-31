@@ -21,6 +21,7 @@ import com.zac4j.browser.util.ImageUtil;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.UUID;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Sink;
@@ -34,12 +35,14 @@ import okio.Source;
 public class PhotoManager {
 
     private static final String TAG = "PhotoManager";
-    public static final int REQUEST_CODE_IMAGE_CHOOSER = 0x01;
+    public static final int REQUEST_CODE_IMAGE_CHOOSER = 0x101;
+    public static final int REQUEST_CODE_IMAGE_CROPPER = 0x102;
 
     private static final String FILE_PROVIDER_AUTHORITY = "com.zac4j.browser.fileprovider";
 
     // photo file path
     private static String sCurrentPhotoPath;
+    private static String sCroppedPhotoPath;
 
     /**
      * Create a camera intent for capture image.
@@ -84,6 +87,35 @@ public class PhotoManager {
     }
 
     /**
+     * Create image crop intent.
+     *
+     * @param uri photo file uri.
+     * @return image crop intent.
+     */
+    private static Intent createCropImageIntent(Uri uri) {
+        Intent intent = new Intent("com.android.camera.action.CROP");
+        intent.setDataAndType(uri, "image/*");
+        // crop为true是设置在开启的intent中设置显示的view可以剪裁
+        intent.putExtra("crop", "true");
+
+        intent.putExtra("scale", true);
+
+        // aspectX aspectY 是宽高的比例
+        intent.putExtra("aspectX", 1);
+        intent.putExtra("aspectY", 1);
+
+        // outputX,outputY 是剪裁图片的宽高
+        intent.putExtra("outputX", 300);
+        intent.putExtra("outputY", 300);
+        intent.putExtra("return-data", false);
+        intent.putExtra("noFaceDetection", true);
+
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(new File(createCropOutPutPath())));
+        intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString());
+        return intent;
+    }
+
+    /**
      * Create image chooser.
      *
      * @param fragment fragment which invoke image chooser.
@@ -106,6 +138,39 @@ public class PhotoManager {
         chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, intentArray);
 
         fragment.startActivityForResult(chooserIntent, REQUEST_CODE_IMAGE_CHOOSER);
+    }
+
+    /**
+     * Crop given image.
+     *
+     * @param fragment image picker screen.
+     * @param photoUri uri for select photo.
+     */
+    public static void createImageCropper(Fragment fragment, Uri photoUri) {
+        String path = FileUtil.getPath(fragment.getActivity(), photoUri);
+        Uri fileUri = Uri.fromFile(new File(path));
+        Intent i = createCropImageIntent(fileUri);
+        fragment.startActivityForResult(i, REQUEST_CODE_IMAGE_CROPPER);
+    }
+
+    /**
+     * Create a path for output cropped photo.
+     *
+     * @return path for output photo.
+     */
+    private static String createCropOutPutPath() {
+        String filename = UUID.randomUUID().toString().replace("-", "");
+        sCroppedPhotoPath = getPictureStorageDir(filename);
+        return sCroppedPhotoPath;
+    }
+
+    /**
+     * Get cropped photo path.
+     *
+     * @return cropped photo path.
+     */
+    public static String getCroppedPhotoPath() {
+        return sCroppedPhotoPath;
     }
 
     /**
