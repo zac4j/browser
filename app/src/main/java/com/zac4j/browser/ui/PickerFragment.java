@@ -265,39 +265,43 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
             return;
         }
 
-        if (requestCode != PhotoManager.REQUEST_CODE_IMAGE_CHOOSER || mFilePathCallback == null) {
+        if (mFilePathCallback == null) {
             super.onActivityResult(requestCode, resultCode, data);
-            return;
         }
 
-        Uri[] results = null;
+        if (requestCode == PhotoManager.REQUEST_CODE_IMAGE_CHOOSER) {
+            Uri[] results = null;
+            // Check that the response is a good one
+            if (resultCode == Activity.RESULT_OK) {
+                if (data == null) {
+                    // If there is not data, then we may have taken a photo
+                    File photoFile = new File(PhotoManager.getCurrentPhotoPath());
+                    results = new Uri[] { Uri.fromFile(photoFile) };
+                } else {
+                    ClipData clipData = data.getClipData();
+                    Uri uri = data.getData();
 
-        // Check that the response is a good one
-        if (resultCode == Activity.RESULT_OK) {
-            if (data == null) {
-                // If there is not data, then we may have taken a photo
-                File photoFile = new File(PhotoManager.getCurrentPhotoPath());
-                results = new Uri[] { Uri.fromFile(photoFile) };
-            } else {
-                ClipData clipData = data.getClipData();
-                Uri uri = data.getData();
+                    // Multiple image results in clip data.
+                    int clipCount = clipData == null ? 0 : clipData.getItemCount();
+                    if (clipCount > 0) {
+                        results = new Uri[clipCount];
+                        for (int i = 0; i < clipCount; i++) {
+                            results[i] = clipData.getItemAt(i).getUri();
+                        }
+                    }
 
-                // Multiple image results in clip data.
-                int clipCount = clipData == null ? 0 : clipData.getItemCount();
-                if (clipCount > 0) {
-                    results = new Uri[clipCount];
-                    for (int i = 0; i < clipCount; i++) {
-                        results[i] = clipData.getItemAt(i).getUri();
+                    // Single image result
+                    if (uri != null) {
+                        results = new Uri[] { uri };
                     }
                 }
 
-                // Single image result
-                if (uri != null) {
-                    results = new Uri[] { uri };
-                }
+                PhotoManager.createImageCropper(PickerFragment.this, results[0]);
             }
-
-            handleImageResults(getActivity(), results);
+        } else if (requestCode == PhotoManager.REQUEST_CODE_IMAGE_CROPPER) {
+            String filePath = PhotoManager.getCroppedPhotoPath();
+            Uri[] uris = new Uri[] { Uri.fromFile(new File(filePath)) };
+            handleImageResults(getActivity(), uris);
         }
     }
 
