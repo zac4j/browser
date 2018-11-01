@@ -135,10 +135,10 @@ public class ImageUtil {
      */
     public static File createImageFile(Context context) {
         // Create an image file name
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
-        String imageFileName = "IMG_" + timeStamp + ".jpg";
-        File filesDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        return new File(filesDir, imageFileName);
+        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+        String filename = "IMG_" + timestamp + ".jpg";
+        File path = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        return new File(path, filename);
     }
 
     /**
