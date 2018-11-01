@@ -275,8 +275,12 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
             if (resultCode == Activity.RESULT_OK) {
                 if (data == null) {
                     // If there is not data, then we may have taken a photo
-                    File photoFile = new File(PhotoManager.getCurrentPhotoPath());
-                    results = new Uri[] { Uri.fromFile(photoFile) };
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        results = new Uri[] { PhotoManager.getCurrentPhotoUri() };
+                    } else {
+                        File photoFile = new File(PhotoManager.getCurrentPhotoPath());
+                        results = new Uri[] { Uri.fromFile(photoFile) };
+                    }
                 } else {
                     ClipData clipData = data.getClipData();
                     Uri uri = data.getData();
@@ -295,7 +299,9 @@ public class PickerFragment extends Fragment implements EasyPermissions.Permissi
                         results = new Uri[] { uri };
                     }
                 }
-
+                // send to web page.
+                // handleImageResults(getActivity(), results);
+                // send to photo crop screen.
                 PhotoManager.createImageCropper(PickerFragment.this, results[0]);
             }
         } else if (requestCode == PhotoManager.REQUEST_CODE_IMAGE_CROPPER) {
