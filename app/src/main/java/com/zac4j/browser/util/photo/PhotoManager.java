@@ -21,7 +21,6 @@ import com.zac4j.browser.util.ImageUtil;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.UUID;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Sink;
@@ -42,6 +41,8 @@ public class PhotoManager {
 
     // photo file path
     private static String sCurrentPhotoPath;
+    // Used for share file uri between diff system image action in API level above Android N devices.
+    private static Uri sCurrentPhotoUri;
     private static String sCroppedPhotoPath;
 
     /**
@@ -50,36 +51,27 @@ public class PhotoManager {
      * @param context context
      * @return a camera intent.
      */
-    private static Intent createTakePhotoIntent(Context context) {
+    private static Intent createTakePhotoIntent(@NonNull Context context) {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (intent.resolveActivity(context.getPackageManager()) != null) {
-            // Create the File where the photo should go
-            File photoFile = null;
-            try {
-                photoFile = ImageUtil.createImageFile(context);
-            } catch (Exception ex) {
-                // Error occurred while creating the File
-                Logger.e(TAG, "Unable to create Image File", ex);
-            }
-
-            // Continue only if the File was successfully created
-            if (photoFile != null) {
-                Uri uri = FileProvider.getUriForFile(context, FILE_PROVIDER_AUTHORITY, photoFile);
-                sCurrentPhotoPath = photoFile.getAbsolutePath();
-                intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
-            } else {
-                intent = null;
-            }
+            // Create the File where the photo should go.
+            File file = ImageUtil.createImageFile(context);
+            // Save a temporary photo file path.
+            sCurrentPhotoPath = file.getAbsolutePath();
+            // Continue only if the File was successfully created.
+            sCurrentPhotoUri = FileProvider.getUriForFile(context, FILE_PROVIDER_AUTHORITY, file);
+            // Setup photo file output uri.
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, sCurrentPhotoUri);
         }
         return intent;
     }
 
     /**
-     * Create an album intent for pick image.
+     * Create an album intent for pick photo.
      *
      * @return an album intent.
      */
-    private static Intent createSelectImageIntent() {
+    private static Intent createSelectPhotoIntent() {
         Intent selectImageIntent = new Intent(Intent.ACTION_GET_CONTENT);
         selectImageIntent.addCategory(Intent.CATEGORY_OPENABLE);
         selectImageIntent.setType("image/*");
@@ -89,11 +81,14 @@ public class PhotoManager {
     /**
      * Create image crop intent.
      *
+     * @param context screen context.
      * @param uri photo file uri.
      * @return image crop intent.
      */
-    private static Intent createCropImageIntent(Uri uri) {
+    private static Intent createCropImageIntent(@NonNull Context context, @NonNull Uri uri) {
         Intent intent = new Intent("com.android.camera.action.CROP");
+        // Don't forget this line naive person.
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         intent.setDataAndType(uri, "image/*");
         // crop为true是设置在开启的intent中设置显示的view可以剪裁
         intent.putExtra("crop", "true");
@@ -110,7 +105,13 @@ public class PhotoManager {
         intent.putExtra("return-data", false);
         intent.putExtra("noFaceDetection", true);
 
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(new File(createCropOutPutPath())));
+        // Create the File where the photo should go.
+        File file = ImageUtil.createImageFile(context);
+        // Save a temporary photo file path.
+        sCroppedPhotoPath = file.getAbsolutePath();
+        Uri outPutUri = Uri.fromFile(file);
+
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, outPutUri);
         intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString());
         return intent;
     }
@@ -120,7 +121,10 @@ public class PhotoManager {
      *
      * @param fragment fragment which invoke image chooser.
      */
-    public static void createImageChooser(Fragment fragment) {
+    public static void createImageChooser(@NonNull Fragment fragment) {
+        if (fragment.getActivity() == null) {
+            return;
+        }
         Intent takePhotoIntent = createTakePhotoIntent(fragment.getActivity());
 
         Intent[] intentArray;
@@ -130,10 +134,10 @@ public class PhotoManager {
             intentArray = new Intent[0];
         }
 
-        Intent selectImageIntent = createSelectImageIntent();
+        Intent selectPhotoIntent = createSelectPhotoIntent();
 
         Intent chooserIntent = new Intent(Intent.ACTION_CHOOSER);
-        chooserIntent.putExtra(Intent.EXTRA_INTENT, selectImageIntent);
+        chooserIntent.putExtra(Intent.EXTRA_INTENT, selectPhotoIntent);
         chooserIntent.putExtra(Intent.EXTRA_TITLE, "Image Chooser");
         chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, intentArray);
 
@@ -146,28 +150,36 @@ public class PhotoManager {
      * @param fragment image picker screen.
      * @param photoUri uri for select photo.
      */
-    public static void createImageCropper(Fragment fragment, Uri photoUri) {
-        String path = FileUtil.getPath(fragment.getActivity(), photoUri);
-        Uri fileUri = Uri.fromFile(new File(path));
-        Intent i = createCropImageIntent(fileUri);
+    public static void createImageCropper(@NonNull Fragment fragment, @NonNull Uri photoUri) {
+        if (fragment.getActivity() == null) {
+            return;
+        }
+        Intent i = createCropImageIntent(fragment.getActivity(), photoUri);
         fragment.startActivityForResult(i, REQUEST_CODE_IMAGE_CROPPER);
     }
 
     /**
-     * Create a path for output cropped photo.
+     * Get path of current taken photo.
      *
-     * @return path for output photo.
+     * @return The path of current taken photo.
      */
-    private static String createCropOutPutPath() {
-        String filename = UUID.randomUUID().toString().replace("-", "");
-        sCroppedPhotoPath = getPictureStorageDir(filename);
-        return sCroppedPhotoPath;
+    public static String getCurrentPhotoPath() {
+        return sCurrentPhotoPath;
     }
 
     /**
-     * Get cropped photo path.
+     * Get current capture photo file uri which was generated by {@link FileProvider}.
      *
-     * @return cropped photo path.
+     * @return current photo file uri.
+     */
+    public static Uri getCurrentPhotoUri() {
+        return sCurrentPhotoUri;
+    }
+
+    /**
+     * Get cropped photo file path.
+     *
+     * @return cropped photo file path.
      */
     public static String getCroppedPhotoPath() {
         return sCroppedPhotoPath;
@@ -205,15 +217,6 @@ public class PhotoManager {
         }
 
         return file;
-    }
-
-    /**
-     * Get path of current taken photo.
-     *
-     * @return The path of current taken photo.
-     */
-    public static String getCurrentPhotoPath() {
-        return sCurrentPhotoPath;
     }
 
     /**
